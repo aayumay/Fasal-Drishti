@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polygon, Polyline, Marker, useMapEvents, useMap, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ChevronLeft, ChevronRight, Check, Plus, Minus, Navigation, Layers, MoreHorizontal, ShieldCheck, ArrowUpRight, X, MapPin, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Plus, Minus, Navigation, Layers, MoreHorizontal, ShieldCheck, ArrowUpRight, X, MapPin, Trash2, IndianRupee } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
+import { polygon } from '@turf/helpers';
+import area from '@turf/area';
 
 export default function MapModule() {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ export default function MapModule() {
   const [locationDenied, setLocationDenied] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState([28.7045, 77.1028]);
+  const [roiData, setRoiData] = useState(null);
 
   useEffect(() => {
     const fetchFarms = async () => {
@@ -67,6 +70,20 @@ export default function MapModule() {
 
   const handleSaveFarm = async () => {
     if (!newPolygonCoords) return;
+    
+    let calculatedAreaAcres = (Math.random() * 4 + 1).toFixed(1);
+    if (newPolygonCoords && newPolygonCoords.length >= 3) {
+      try {
+        const turfCoords = newPolygonCoords.map(c => [c[1], c[0]]);
+        turfCoords.push(turfCoords[0]); // close the polygon
+        const p = polygon([turfCoords]);
+        const areaSqMeters = area(p);
+        calculatedAreaAcres = (areaSqMeters * 0.000247105).toFixed(2);
+      } catch (err) {
+        console.error("Area calculation error:", err);
+      }
+    }
+
     try {
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : 'mock-token';
@@ -74,7 +91,7 @@ export default function MapModule() {
       const payload = {
         name: `Farm ${String.fromCharCode(65 + farms.length)}`,
         crop: newFarmCrop,
-        area_acres: (Math.random() * 4 + 1).toFixed(1),
+        area_acres: calculatedAreaAcres,
         coordinates: newPolygonCoords,
         score: score,
         yield: `${Math.floor(score * 80)}kg/ha`,
@@ -178,6 +195,16 @@ export default function MapModule() {
   useEffect(() => {
     if (activeFarm?.coordinates?.[0]) {
       setMapCenter(activeFarm.coordinates[0]);
+    }
+    if (activeFarm) {
+      fetch('http://localhost:8000/api/map/ndvi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activeFarm.coordinates || [])
+      })
+      .then(res => res.json())
+      .then(data => setRoiData(data))
+      .catch(console.error);
     }
   }, [activeFarm]);
 
@@ -550,6 +577,39 @@ export default function MapModule() {
               </div>
             </div>
           </div>
+
+          {/* Pesticide ROI Dashboard */}
+          {roiData && (
+            <div className="bg-brand-green/5 border border-brand-green/20 rounded-3xl p-6 mb-5 shadow-sm animate-fade-in">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center">
+                    <IndianRupee size={16} className="text-brand-green" />
+                  </div>
+                  <h3 className="text-sm font-bold text-brand-text">Precision ROI</h3>
+                </div>
+                <span className="text-xs font-bold text-brand-green px-2 py-1 bg-brand-green/10 rounded-lg">
+                  {roiData.savings_percent}% Savings
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-brand-text/5 relative overflow-hidden">
+                  <p className="text-[10px] text-brand-text-muted font-bold uppercase tracking-wider mb-1 relative z-10">Standard Spray</p>
+                  <p className="text-lg font-bold text-brand-text mb-0.5 relative z-10">{roiData.pesticide_volume_ml} ml</p>
+                  <p className="text-xs text-brand-danger font-medium relative z-10">Full Field</p>
+                  <div className="absolute right-0 bottom-0 w-16 h-16 bg-brand-danger/5 rounded-tl-[40px]"></div>
+                </div>
+                
+                <div className="bg-brand-green text-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
+                  <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider mb-1 relative z-10">Targeted Spray</p>
+                  <p className="text-lg font-bold mb-0.5 relative z-10">{Math.round(roiData.pesticide_volume_ml * (1 - roiData.savings_percent/100))} ml</p>
+                  <p className="text-xs text-white/90 font-medium relative z-10">Affected Zones</p>
+                  <div className="absolute right-0 bottom-0 w-16 h-16 bg-white/10 rounded-tl-[40px]"></div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button onClick={() => navigate('/diagnose')} className="primary-btn">
             <span>View Prediction</span>

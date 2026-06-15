@@ -1,4 +1,4 @@
-import { Droplets, Thermometer, Wind, CloudRain, Sprout, Lightbulb, CheckCircle2, TrendingUp, ArrowLeft } from 'lucide-react';
+import { Droplets, Thermometer, Wind, CloudRain, Sprout, Lightbulb, CheckCircle2, TrendingUp, ArrowLeft, Camera, X, Loader2, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { FactorsSkeleton } from '../components/Skeleton';
@@ -12,6 +12,11 @@ export default function Diagnose() {
   const [spread, setSpread] = useState(null);
   const [spreadLoading, setSpreadLoading] = useState(true);
   const [activeFarm, setActiveFarm] = useState(null);
+
+  // Scan Leaf State
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
+  const [scanModalOpen, setScanModalOpen] = useState(false);
 
   useEffect(() => {
     const localFarms = localStorage.getItem('fasal_farms');
@@ -56,6 +61,35 @@ export default function Diagnose() {
       })
       .finally(() => setSpreadLoading(false));
   }, []);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanModalOpen(true);
+    setScanLoading(true);
+    setScanResult(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('http://localhost:8000/api/diagnose', {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) throw new Error('Diagnosis failed');
+      const data = await res.json();
+      setScanResult(data);
+    } catch (error) {
+      setScanResult({ error: true, disease: 'Analysis Failed', action: 'Please check your connection and try again.' });
+    } finally {
+      setScanLoading(false);
+    }
+    
+    // Reset file input so same file can be uploaded again if needed
+    e.target.value = null;
+  };
 
   return (
     <div className="pt-12 px-5 pb-24 flex-1 overflow-y-auto">
@@ -215,6 +249,71 @@ export default function Diagnose() {
           >
             Go to Map & Draw Farm
           </button>
+        </div>
+      )}
+
+      {/* Scan Leaf FAB */}
+      {activeFarm && (
+        <div className="fixed bottom-24 right-5 z-40">
+          <label className="flex items-center justify-center w-14 h-14 bg-brand-green text-white rounded-full shadow-xl cursor-pointer hover:bg-brand-green/90 transition-transform active:scale-95 group">
+            <Camera size={24} />
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageUpload} />
+            {/* Tooltip */}
+            <span className="absolute right-16 bg-brand-text text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              Scan Leaf
+            </span>
+          </label>
+        </div>
+      )}
+
+      {/* Diagnosis Result Modal */}
+      {scanModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-6 relative">
+            <button onClick={() => setScanModalOpen(false)} className="absolute top-4 right-4 text-brand-text-muted hover:text-brand-text bg-brand-bg rounded-full p-1">
+              <X size={20} />
+            </button>
+            
+            {scanLoading ? (
+              <div className="flex flex-col items-center justify-center py-10">
+                <Loader2 size={40} className="text-brand-green animate-spin mb-4" />
+                <h3 className="text-lg font-bold text-brand-text">Analyzing Leaf...</h3>
+                <p className="text-sm text-brand-text-muted text-center mt-2">AI is scanning for pests and diseases.</p>
+              </div>
+            ) : scanResult ? (
+              <div className="py-2 animate-fade-in">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full mx-auto mb-4 bg-brand-bg">
+                  {scanResult.severity === 'Critical' || scanResult.severity === 'High' ? (
+                    <AlertTriangle size={32} className="text-brand-danger" />
+                  ) : scanResult.error ? (
+                    <X size={32} className="text-brand-danger" />
+                  ) : (
+                    <ShieldCheck size={32} className="text-brand-green" />
+                  )}
+                </div>
+                
+                <h3 className={`text-2xl font-bold text-center mb-1 ${scanResult.severity === 'Critical' ? 'text-brand-danger' : 'text-brand-text'}`}>
+                  {scanResult.disease}
+                </h3>
+                {!scanResult.error && (
+                  <p className="text-center text-brand-text-muted text-sm mb-6">
+                    Confidence: <span className="font-bold text-brand-text">{scanResult.confidence}%</span>
+                  </p>
+                )}
+                
+                <div className="bg-brand-bg rounded-2xl p-4 mb-6">
+                  <h4 className="text-xs font-bold text-brand-text-muted uppercase mb-2">Recommended Action</h4>
+                  <p className="text-sm text-brand-text font-medium leading-relaxed">
+                    {scanResult.action}
+                  </p>
+                </div>
+                
+                <button onClick={() => setScanModalOpen(false)} className="primary-btn w-full">
+                  Done
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       )}
     </div>
