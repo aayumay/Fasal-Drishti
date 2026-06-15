@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Polygon, Polyline, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Polyline, Marker, useMapEvents, useMap, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ChevronLeft, ChevronRight, Check, Plus, Minus, Navigation, Layers, MoreHorizontal, ShieldCheck, ArrowUpRight, X, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Plus, Minus, Navigation, Layers, MoreHorizontal, ShieldCheck, ArrowUpRight, X, MapPin, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 
@@ -70,14 +70,17 @@ export default function MapModule() {
     try {
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : 'mock-token';
+      const score = Math.floor(Math.random() * 40) + 60;
       const payload = {
         name: `Farm ${String.fromCharCode(65 + farms.length)}`,
         crop: newFarmCrop,
-        area_acres: 2.5,
+        area_acres: (Math.random() * 4 + 1).toFixed(1),
         coordinates: newPolygonCoords,
-        score: Math.floor(Math.random() * 40) + 60,
-        status: 'Watch',
-        color: 'bg-brand-accent'
+        score: score,
+        yield: `${Math.floor(score * 80)}kg/ha`,
+        location: 'Mapped Field',
+        status: score > 80 ? 'Healthy' : score > 60 ? 'Watch' : 'High Risk',
+        color: score > 80 ? 'bg-brand-green' : score > 60 ? 'bg-brand-accent' : 'bg-brand-danger'
       };
       let newId = Date.now().toString();
       try {
@@ -182,6 +185,98 @@ export default function MapModule() {
 
   const farmScore = activeFarm?.score || 82;
 
+  const generateGridCells = (coords, score) => {
+    if (!coords || coords.length < 3) return [];
+    
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    coords.forEach(([lat, lng]) => {
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+    });
+
+    const METERS_PER_DEGREE_LAT = 111111;
+    const midLat = (minLat + maxLat) / 2;
+    const METERS_PER_DEGREE_LNG = 111111 * Math.cos(midLat * Math.PI / 180);
+    
+    const stepLat = 10 / METERS_PER_DEGREE_LAT;
+    const stepLng = 10 / METERS_PER_DEGREE_LNG;
+    
+    const validCells = [];
+    
+    const pointInPolygon = (point, vs) => {
+      let x = point[0], y = point[1];
+      let inside = false;
+      for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        let xi = vs[i][0], yi = vs[i][1];
+        let xj = vs[j][0], yj = vs[j][1];
+        let intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    };
+
+    for (let lat = minLat; lat <= maxLat; lat += stepLat) {
+      for (let lng = minLng; lng <= maxLng; lng += stepLng) {
+        const cellMinLat = lat;
+        const cellMaxLat = lat + stepLat;
+        const cellMinLng = lng;
+        const cellMaxLng = lng + stepLng;
+        
+        const centerLat = cellMinLat + stepLat / 2;
+        const centerLng = cellMinLng + stepLng / 2;
+        
+        if (pointInPolygon([centerLat, centerLng], coords)) {
+          validCells.push([ [cellMinLat, cellMinLng], [cellMaxLat, cellMaxLng] ]);
+        }
+      }
+    }
+    
+    if (validCells.length === 0) return []; 
+    
+    const healthyPct = score;
+    const remaining = 100 - healthyPct;
+    const watchPct = Math.floor(remaining * 0.5);
+    const riskPct = Math.floor(remaining * 0.3);
+    
+    const N = validCells.length;
+    const healthyCount = Math.round(N * healthyPct / 100);
+    const watchCount = Math.round(N * watchPct / 100);
+    const riskCount = Math.round(N * riskPct / 100);
+    
+    const colors = [];
+    for (let i = 0; i < N; i++) {
+      if (i < healthyCount) colors.push('#4ade80'); 
+      else if (i < healthyCount + watchCount) colors.push('#fbbf24'); 
+      else if (i < healthyCount + watchCount + riskCount) colors.push('#fb923c'); 
+      else colors.push('#ef4444'); 
+    }
+    
+    let seed = score * 100 + N;
+    const random = () => {
+      let x = Math.sin(seed++) * 10000;
+      return x - Math.floor(x);
+    };
+    
+    for (let i = colors.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [colors[i], colors[j]] = [colors[j], colors[i]];
+    }
+
+    return validCells.map((bounds, idx) => ({ bounds, color: colors[idx] }));
+  };
+  const healthyPct = farmScore;
+  const remaining = 100 - healthyPct;
+  const watchPct = Math.floor(remaining * 0.5);
+  const riskPct = Math.floor(remaining * 0.3);
+  const criticalPct = remaining - watchPct - riskPct;
+
+  const directions = ['North', 'North-East', 'East', 'South-East', 'South', 'South-West', 'West', 'North-West'];
+  const spreadDir = directions[farmScore % directions.length];
+  const spreadDays = `${Math.max(1, Math.floor(farmScore / 20))} - ${Math.max(1, Math.floor(farmScore / 20)) + 2} Days`;
+  const confidence = Math.min(99, farmScore + 8);
+
   return (
     <div className="pt-12 px-5 pb-24 flex flex-col flex-1 overflow-y-auto">
       {/* Header */}
@@ -190,7 +285,7 @@ export default function MapModule() {
           <ChevronLeft size={20} />
         </button>
         <div className="text-center flex flex-col items-center">
-          {farms.length > 1 ? (
+          {farms.length > 0 ? (
             <div className="relative inline-block">
               <select 
                 value={activeFarm?.id || ""}
@@ -217,8 +312,8 @@ export default function MapModule() {
           )}
           {activeFarm && <p className="text-brand-text-muted text-xs">{activeFarm.area_acres} Acre • {activeFarm.crop}</p>}
         </div>
-        <button className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
-          <MoreHorizontal size={20} />
+        <button onClick={handleDeleteFarm} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-danger hover:shadow-md transition-all">
+          <Trash2 size={20} />
         </button>
       </div>
 
@@ -335,10 +430,19 @@ export default function MapModule() {
           </div>
 
           {activeFarm?.coordinates && !isDrawingMode && (
-            <Polygon
-              positions={activeFarm.coordinates}
-              pathOptions={{ color: '#ffffff', weight: 2, fillColor: '#E07A5F', fillOpacity: 0.5 }}
-            />
+            <>
+              <Polygon
+                positions={activeFarm.coordinates}
+                pathOptions={{ color: '#ffffff', weight: 2, fillOpacity: 0 }}
+              />
+              {generateGridCells(activeFarm.coordinates, farmScore).map((cell, idx) => (
+                <Rectangle
+                  key={idx}
+                  bounds={cell.bounds}
+                  pathOptions={{ color: cell.color, weight: 1, fillOpacity: 0.45, stroke: false }}
+                />
+              ))}
+            </>
           )}
 
           {userLocation && (
@@ -407,19 +511,19 @@ export default function MapModule() {
               <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-brand-green"></div><span className="text-brand-text-muted">Healthy</span></span>
-                  <span className="text-brand-text font-bold">62%</span>
+                  <span className="text-brand-text font-bold">{healthyPct}%</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-brand-accent"></div><span className="text-brand-text-muted">Watch</span></span>
-                  <span className="text-brand-text font-bold">18%</span>
+                  <span className="text-brand-text font-bold">{watchPct}%</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div><span className="text-brand-text-muted">High Risk</span></span>
-                  <span className="text-brand-text font-bold">14%</span>
+                  <span className="text-brand-text font-bold">{riskPct}%</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-brand-danger"></div><span className="text-brand-text-muted">Critical</span></span>
-                  <span className="text-brand-text font-bold">6%</span>
+                  <span className="text-brand-text font-bold">{criticalPct}%</span>
                 </div>
               </div>
             </div>
@@ -431,14 +535,14 @@ export default function MapModule() {
               <div className="flex-1">
                 <p className="text-[11px] text-brand-text-muted font-medium mb-1.5">Predicted Spread</p>
                 <p className="text-brand-text font-bold text-base flex items-center gap-1.5 mb-1">
-                  North-East <ArrowUpRight size={16} className="text-brand-accent" />
+                  {spreadDir} <ArrowUpRight size={16} className="text-brand-accent" />
                 </p>
-                <p className="text-[12px] text-brand-text-muted">3 - 5 Days</p>
+                <p className="text-[12px] text-brand-text-muted">{spreadDays}</p>
               </div>
               <div className="w-px h-12 bg-brand-text/10"></div>
               <div className="flex-1">
                 <p className="text-[11px] text-brand-text-muted font-medium mb-1.5">Confidence</p>
-                <p className="text-brand-text font-bold text-xl">89%</p>
+                <p className="text-brand-text font-bold text-xl">{confidence}%</p>
                 <div className="flex items-center gap-1 mt-1 text-brand-green">
                   <ShieldCheck size={12} />
                   <span className="text-[10px] font-semibold">AI Verified</span>

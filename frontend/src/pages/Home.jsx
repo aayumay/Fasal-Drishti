@@ -60,18 +60,27 @@ const Home = () => {
       }
 
       let fData = [];
-      try {
-        const farmsRes = await fetch('http://localhost:8000/api/farms', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (farmsRes.ok) {
-          fData = await farmsRes.json();
+      const localFarms = localStorage.getItem('fasal_farms');
+      if (localFarms !== null) {
+        try {
+          fData = JSON.parse(localFarms);
+        } catch (e) {
+          console.error("Failed to parse local farms", e);
         }
-      } catch {
-        fData = [
-          { id: 1, name: 'My Fields', area_acres: 5.0, crop: 'Soybean', score: 82, location: 'Tucson, Arizona', yield: '7200kg/ha' },
-          { id: 2, name: 'My Farm', area_acres: 3.2, crop: 'Cotton', score: 64, location: 'Tucson, Arizona', yield: '7400kg/ha' }
-        ];
+      } else {
+        try {
+          const farmsRes = await fetch('http://localhost:8000/api/farms', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (farmsRes.ok) {
+            fData = await farmsRes.json();
+          }
+        } catch {
+          fData = [
+            { id: 1, name: 'My Fields', area_acres: 5.0, crop: 'Soybean', score: 82, location: 'Tucson, Arizona', yield: '7200kg/ha' },
+            { id: 2, name: 'My Farm', area_acres: 3.2, crop: 'Cotton', score: 64, location: 'Tucson, Arizona', yield: '7400kg/ha' }
+          ];
+        }
       }
 
       if (!fData || fData.length === 0) {
