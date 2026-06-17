@@ -160,22 +160,8 @@ export default function MapModule() {
   };
 
   const requestLocation = async (silent = false) => {
-    const fallbackToIp = async () => {
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        if (data && data.latitude && data.longitude) {
-          setMapCenter([data.latitude, data.longitude]);
-          setUserLocation([data.latitude, data.longitude]);
-          setLocationDenied(false);
-          return true;
-        }
-      } catch {}
-      return false;
-    };
-    if (!('geolocation' in navigator) || (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost')) {
-      const success = await fallbackToIp();
-      if (!success && !silent) setLocationDenied(true);
+    if (!('geolocation' in navigator)) {
+      if (!silent) setLocationDenied(true);
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -183,8 +169,12 @@ export default function MapModule() {
         setMapCenter([pos.coords.latitude, pos.coords.longitude]);
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
         setLocationDenied(false);
-      },async () => { const success = await fallbackToIp(); if (!success && !silent) setLocationDenied(true); },
-      { enableHighAccuracy: true, timeout: 5000 }
+      },
+      (err) => { 
+        console.error("GPS Denied:", err);
+        if (!silent) setLocationDenied(true); 
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 

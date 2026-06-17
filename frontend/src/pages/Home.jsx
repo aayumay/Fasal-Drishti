@@ -20,32 +20,35 @@ const Home = () => {
     // 1. Fetch farms immediately so UI reveals quickly
     loadFarms();
 
-    // 2. Fetch weather only when location resolves (or fails)
+    // 2. Fetch weather ONLY when hardware GPS resolves
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
-          const { latitude, longitude } = pos.coords;
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
           try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
-            );
-            const data = await res.json();
-            const loc = data.address?.state_district || data.address?.state || data.address?.city || 'Unknown';
-            setUserLocation(loc + ', India');
+            const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+            const geoData = await geoRes.json();
+            const city = geoData.city || geoData.locality || 'Unknown Location';
+            const state = geoData.principalSubdivision || geoData.countryName || '';
+            setUserLocation(`${city}${state ? `, ${state}` : ''}`);
           } catch {
             setUserLocation('Location unavailable');
           }
-          loadWeather(latitude, longitude);
+          // Pass the precise hardware coords to backend
+          loadWeather(lat, lon);
         },
-        () => {
-          setUserLocation('Location unavailable');
-          loadWeather(28.6139, 77.2090); // Fallback to Delhi
+        (err) => {
+          console.error("GPS Denied:", err);
+          setUserLocation('Location Access Denied');
+          setWeatherLoading(false);
+          // STRICT CONSTRAINT: No hardcoded fallback coordinates allowed.
         },
-        { enableHighAccuracy: true, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
-      setUserLocation('Location unavailable');
-      loadWeather(28.6139, 77.2090);
+      setUserLocation('GPS Not Supported');
+      setWeatherLoading(false);
     }
   }, []);
 

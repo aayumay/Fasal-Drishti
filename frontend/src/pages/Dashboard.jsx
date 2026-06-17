@@ -43,10 +43,10 @@ export default function Dashboard() {
     };
 
     const handleLocationError = (err) => {
-      // Fallback to New Delhi (default hub) if permission denied
       console.warn("Geolocation error or denied:", err.message);
-      setLocationName("📍 New Delhi, Delhi (Fallback)");
-      fetchWeatherAndLocation(28.6139, 77.2090);
+      setLocationName("📍 Location Access Denied");
+      setIsLoading(false);
+      setError("Hardware GPS required for weather metrics.");
     };
 
     setIsLoading(true);
@@ -59,7 +59,7 @@ export default function Dashboard() {
           fetchWeatherAndLocation(position.coords.latitude, position.coords.longitude);
         },
         handleLocationError,
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
       handleLocationError(new Error("Geolocation not supported by browser."));
