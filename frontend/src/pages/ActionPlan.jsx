@@ -12,7 +12,7 @@ export default function ActionPlan() {
   const loadData = () => {
     setLoading(true);
     setError(null);
-    fetch('http://localhost:8000/api/map/ndvi', {
+    fetch('/api/map/ndvi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify([[28.7041, 77.1025]])

@@ -95,6 +95,9 @@ export default function Login() {
                   required
                 />
               </div>
+              <p className="text-[10px] text-brand-text-muted mt-2 text-center bg-brand-bg py-1.5 rounded-lg border border-brand-green/20">
+                <span className="font-bold text-brand-green">Demo Hint:</span> Enter <span className="font-mono">99999 99999</span> to test
+              </p>
             </div>
             <button type="submit" disabled={loading} className="primary-btn">
               {loading ? <><Loader2 size={18} className="animate-spin" /> Sending...</> : <><span>Send OTP</span><ArrowRight size={20} /></>}
@@ -116,6 +119,9 @@ export default function Login() {
                   required
                 />
               </div>
+              <p className="text-[10px] text-brand-text-muted mt-2 text-center bg-brand-bg py-1.5 rounded-lg border border-brand-green/20">
+                <span className="font-bold text-brand-green">Demo Hint:</span> Enter <span className="font-mono">123456</span> to test
+              </p>
               <p className="text-xs text-brand-text-muted mt-4 text-center">
                 OTP sent to +91 {phone}.{' '}
                 <button type="button" onClick={() => setStep('phone')} className="text-brand-accent font-semibold hover:underline">Change</button>

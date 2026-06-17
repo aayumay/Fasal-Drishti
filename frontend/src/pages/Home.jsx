@@ -17,47 +17,67 @@ const Home = () => {
   const [userLocation, setUserLocation] = useState('');
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
-          );
-          const data = await res.json();
-          const loc = data.address?.state_district || data.address?.state || data.address?.city || 'Unknown';
-          setUserLocation(loc + ', India');
-        } catch {
-          setUserLocation('Location unavailable');
-        }
-      },
-      () => setUserLocation('Location unavailable'),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    // 1. Fetch farms immediately so UI reveals quickly
+    loadFarms();
 
-    loadData();
+    // 2. Fetch weather only when location resolves (or fails)
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
+            );
+            const data = await res.json();
+            const loc = data.address?.state_district || data.address?.state || data.address?.city || 'Unknown';
+            setUserLocation(loc + ', India');
+          } catch {
+            setUserLocation('Location unavailable');
+          }
+          loadWeather(latitude, longitude);
+        },
+        () => {
+          setUserLocation('Location unavailable');
+          loadWeather(28.6139, 77.2090); // Fallback to Delhi
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      setUserLocation('Location unavailable');
+      loadWeather(28.6139, 77.2090);
+    }
   }, []);
 
-  const loadData = async () => {
+  const loadWeather = async (lat, lon) => {
+    try {
+      const weatherRes = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
+      if (weatherRes.ok) {
+        const wData = await weatherRes.json();
+        setWeather({ 
+          temp: wData.temp, 
+          condition: wData.condition, 
+          rainProb: wData.rainProb, 
+          humidity: wData.humidity || 65, 
+          wind: wData.windSpeed, 
+          tempChange: '+1°' 
+        });
+      } else {
+        setWeather({ temp: 34, condition: 'Clear', rainProb: 5, humidity: 88, wind: 5, tempChange: '+2°' });
+      }
+    } catch {
+      setWeather({ temp: 34, condition: 'Clear', rainProb: 5, humidity: 88, wind: 5, tempChange: '+2°' });
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  const loadFarms = async () => {
     setLoading(true);
     setError(null);
     try {
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : 'mock-token';
-
-      try {
-        const weatherRes = await fetch('http://localhost:8000/api/weather');
-        if (weatherRes.ok) {
-          const wData = await weatherRes.json();
-          setWeather(wData);
-        } else {
-          setWeather({ temp: 34, condition: 'Clear', rainProb: 5, humidity: 88, wind: 5, tempChange: '+2°' });
-        }
-      } catch {
-        setWeather({ temp: 34, condition: 'Clear', rainProb: 5, humidity: 88, wind: 5, tempChange: '+2°' });
-      } finally {
-        setWeatherLoading(false);
-      }
 
       let fData = [];
       const localFarms = localStorage.getItem('fasal_farms');
@@ -69,7 +89,7 @@ const Home = () => {
         }
       } else {
         try {
-          const farmsRes = await fetch('http://localhost:8000/api/farms', {
+          const farmsRes = await fetch('/api/farms', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (farmsRes.ok) {

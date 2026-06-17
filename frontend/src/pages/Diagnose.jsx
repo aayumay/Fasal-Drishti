@@ -33,13 +33,13 @@ export default function Diagnose() {
         }
       }
     }
-    fetch('http://localhost:8000/api/weather')
+    fetch('/api/weather')
       .then(res => { if (!res.ok) throw new Error('API Error'); return res.json(); })
       .then(data => setWeather({ temp: data.temp || 32, rainProb: data.rainProb || 40, condition: data.condition || '', windSpeed: data.windSpeed || 18, humidity: data.humidity || 92 }))
       .catch(() => setWeatherError('Could not fetch weather data'))
       .finally(() => setWeatherLoading(false));
 
-    fetch('http://localhost:8000/api/disease/spread', {
+    fetch('/api/disease/spread', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ farm_id: "mock1", current_red_zone_acres: 0.5 })
@@ -74,7 +74,7 @@ export default function Diagnose() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:8000/api/diagnose', {
+      const res = await fetch('/api/diagnose', {
         method: 'POST',
         body: formData
       });

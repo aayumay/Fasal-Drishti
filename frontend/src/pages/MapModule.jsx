@@ -8,6 +8,23 @@ import { auth } from '../firebase';
 import { polygon } from '@turf/helpers';
 import area from '@turf/area';
 
+function RecenterMap({ center }) {
+  const map = useMap();
+  useEffect(() => { if (center) map.setView(center, map.getZoom()); }, [center, map]);
+  return null;
+}
+
+function MapInteractionHandler({ isDrawingMode, newPolygonCoords, setTempCoords }) {
+  useMapEvents({
+    click(e) {
+      if (isDrawingMode && !newPolygonCoords) {
+        setTempCoords(prev => [...prev, [e.latlng.lat, e.latlng.lng]]);
+      }
+    }
+  });
+  return null;
+}
+
 export default function MapModule() {
   const navigate = useNavigate();
   const [farms, setFarms] = useState([]);
@@ -47,7 +64,7 @@ export default function MapModule() {
         }
         const user = auth.currentUser;
         const token = user ? await user.getIdToken() : 'mock-token';
-        const res = await fetch('http://localhost:8000/api/farms', {
+        const res = await fetch('/api/farms', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -71,37 +88,35 @@ export default function MapModule() {
   const handleSaveFarm = async () => {
     if (!newPolygonCoords) return;
     
-    let calculatedAreaAcres = (Math.random() * 4 + 1).toFixed(1);
-    if (newPolygonCoords && newPolygonCoords.length >= 3) {
-      try {
-        const turfCoords = newPolygonCoords.map(c => [c[1], c[0]]);
-        turfCoords.push(turfCoords[0]); // close the polygon
-        const p = polygon([turfCoords]);
-        const areaSqMeters = area(p);
-        calculatedAreaAcres = (areaSqMeters * 0.000247105).toFixed(2);
-      } catch (err) {
-        console.error("Area calculation error:", err);
+    let calculatedAreaAcres = 0;
+    try {
+      const res = await fetch('/api/map/ndvi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPolygonCoords)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        calculatedAreaAcres = data.area_acres || 0;
       }
+    } catch (err) {
+      console.error("Backend offline, area calculation failed:", err);
     }
 
     try {
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : 'mock-token';
-      const score = Math.floor(Math.random() * 40) + 60;
+      
       const payload = {
         name: `Farm ${String.fromCharCode(65 + farms.length)}`,
         crop: newFarmCrop,
         area_acres: calculatedAreaAcres,
         coordinates: newPolygonCoords,
-        score: score,
-        yield: `${Math.floor(score * 80)}kg/ha`,
-        location: 'Mapped Field',
-        status: score > 80 ? 'Healthy' : score > 60 ? 'Watch' : 'High Risk',
-        color: score > 80 ? 'bg-brand-green' : score > 60 ? 'bg-brand-accent' : 'bg-brand-danger'
       };
+      
       let newId = Date.now().toString();
       try {
-        const res = await fetch('http://localhost:8000/api/farms', {
+        const res = await fetch('/api/farms', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -114,7 +129,7 @@ export default function MapModule() {
         console.warn("Backend offline, saving to localStorage only.");
       }
 
-      const newFarm = { id: newId, ...payload };
+      const newFarm = { id: newId, ...payload, status: 'Active' };
       const updatedFarms = [...farms, newFarm];
       setFarms(updatedFarms);
       setActiveFarm(newFarm);
@@ -143,17 +158,6 @@ export default function MapModule() {
       }
     }
   };
-
-  function MapInteractionHandler() {
-    useMapEvents({
-      click(e) {
-        if (isDrawingMode && !newPolygonCoords) {
-          setTempCoords(prev => [...prev, [e.latlng.lat, e.latlng.lng]]);
-        }
-      }
-    });
-    return null;
-  }
 
   const requestLocation = async (silent = false) => {
     const fallbackToIp = async () => {
@@ -186,18 +190,12 @@ export default function MapModule() {
 
   const handleUseCurrentLocation = () => requestLocation(false);
 
-  function RecenterMap({ center }) {
-    const map = useMap();
-    useEffect(() => { if (center) map.setView(center, map.getZoom()); }, [center, map]);
-    return null;
-  }
-
   useEffect(() => {
     if (activeFarm?.coordinates?.[0]) {
       setMapCenter(activeFarm.coordinates[0]);
     }
     if (activeFarm) {
-      fetch('http://localhost:8000/api/map/ndvi', {
+      fetch('/api/map/ndvi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(activeFarm.coordinates || [])
@@ -423,7 +421,7 @@ export default function MapModule() {
           Data Source: Sentinel-2 Based Model Simulation for MVP
         </div>
 
-        <MapContainer center={mapCenter} zoom={isDrawingMode ? 18 : 17} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+        <MapContainer center={mapCenter} zoom={isDrawingMode ? 18 : 17} style={{ height: '100%', width: '100%' }} zoomControl={false} doubleClickZoom={false}>
           <RecenterMap center={mapCenter} />
           <TileLayer
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -484,7 +482,7 @@ export default function MapModule() {
             />
           )}
 
-          <MapInteractionHandler />
+          <MapInteractionHandler isDrawingMode={isDrawingMode} newPolygonCoords={newPolygonCoords} setTempCoords={setTempCoords} />
 
           {isDrawingMode && !newPolygonCoords && tempCoords.length > 0 && (
             <>

@@ -24,7 +24,7 @@ export function CardSkeleton() {
 
 export function WeatherSkeleton() {
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-sm animate-fade-in">
+    <div className="bg-white rounded-3xl p-6 shadow-sm animate-fade-in mb-6">
       <div className="flex justify-between items-center mb-5">
         <div className="space-y-2">
           <Skeleton width="80px" height="40px" />
