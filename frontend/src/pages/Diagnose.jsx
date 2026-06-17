@@ -319,7 +319,7 @@ export default function Diagnose() {
                 {!scanResult.error && (
                   <button 
                     onClick={() => setIsVendorDrawerOpen(true)}
-                    className="mb-4 flex items-center justify-center w-full gap-2 bg-gradient-to-r from-emerald-600 to-emerald-400 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] animate-pulse transition-shadow border border-emerald-400/50"
+                    className="mb-4 flex items-center justify-center w-full gap-2 bg-brand-text hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-sm transition-colors"
                   >
                     <span className="text-lg">🛒</span> Procure Recommended Treatment
                   </button>
