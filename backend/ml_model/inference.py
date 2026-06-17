@@ -35,6 +35,10 @@ DISEASE_INFO = {
         "severity": "Moderate",
         "action": "Spray Neem oil extract or targeted insecticide. Check undersides of leaves."
     },
+    "Invalid_Image": {
+        "severity": "Unknown",
+        "action": "Unrecognized Image. Please ensure you are uploading a clear, well-lit photo of a crop leaf."
+    },
     "Unknown": {
         "severity": "Unknown",
         "action": "Could not identify the condition. Please consult a local agricultural expert."
@@ -81,13 +85,17 @@ def predict_image(image_bytes):
         class_idx = np.argmax(output_data)
         confidence = float(output_data[class_idx]) * 100
         
-        raw_disease_name = _class_names[class_idx] if class_idx < len(_class_names) else "Unknown"
+        if confidence < 85.0:
+            raw_disease_name = "Invalid_Image"
+        else:
+            raw_disease_name = _class_names[class_idx] if class_idx < len(_class_names) else "Unknown"
         
         # Fallback to defaults if name is slightly different
         disease_info = DISEASE_INFO.get(raw_disease_name, DISEASE_INFO["Unknown"])
         
         return {
             "disease": raw_disease_name.replace('_', ' '),
+            "predictionClass": raw_disease_name,
             "confidence": round(confidence, 2),
             "severity": disease_info["severity"],
             "action": disease_info["action"]

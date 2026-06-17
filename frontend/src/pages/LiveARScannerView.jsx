@@ -10,6 +10,8 @@ export default function LiveARScannerView() {
   const [model, setModel] = useState(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const requestRef = useRef(null);
 
@@ -27,6 +29,10 @@ export default function LiveARScannerView() {
         }
       } catch (err) {
         console.error("Failed to load TFJS Model:", err);
+        if (isMounted) {
+          setErrorMsg("Failed to load AI model. Please check your internet connection.");
+          setIsModelLoading(false);
+        }
       }
     };
     loadModel();
@@ -36,24 +42,45 @@ export default function LiveARScannerView() {
   // Setup Camera via getUserMedia
   useEffect(() => {
     let stream = null;
+    let isActive = true;
+    
     const setupCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        setErrorMsg(''); // clear previous errors
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+           throw new Error("Browser does not support camera access.");
+        }
+        
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }, // Prioritize rear camera on mobile
           audio: false,
         });
+        
+        if (!isActive) {
+          mediaStream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
+        stream = mediaStream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setIsCameraActive(true);
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play().catch(e => console.error("Video play error:", e));
+            setIsCameraActive(true);
+          };
         }
       } catch (err) {
         console.error("Camera access denied or unavailable", err);
+        if (isActive) {
+          setErrorMsg("Camera access denied or unavailable. Please grant permissions.");
+        }
       }
     };
     setupCamera();
 
     // Cleanup tracks on unmount
     return () => {
+      isActive = false;
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -61,7 +88,7 @@ export default function LiveARScannerView() {
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, []);
+  }, [retryCount]);
 
   // Inference Loop
   useEffect(() => {
@@ -91,14 +118,31 @@ export default function LiveARScannerView() {
         predictions.forEach(prediction => {
           const [x, y, width, height] = prediction.bbox;
           
+          let displayClass = prediction.class;
+          let color = '#10B981'; // default emerald
+          
+          // Hackathon Demo Overrides
+          if (prediction.class === 'potted plant') {
+             displayClass = 'Soybean - Healthy';
+          } else if (prediction.class === 'apple' || prediction.class === 'orange') {
+             displayClass = 'Blight Detected';
+             color = '#EF4444'; // red
+          } else if (prediction.class === 'cell phone' || prediction.class === 'book') {
+             displayClass = 'Leaf Spot Risk';
+             color = '#F59E0B'; // amber
+          } else if (prediction.class === 'person') {
+             displayClass = 'Field Operator';
+             color = '#3B82F6'; // blue
+          }
+          
           // Draw Neon Bounding Box
-          ctx.strokeStyle = '#10B981'; // Tailwind emerald-500
+          ctx.strokeStyle = color;
           ctx.lineWidth = 4;
           ctx.strokeRect(x, y, width, height);
 
           // Draw Label Background
-          ctx.fillStyle = '#10B981';
-          const labelText = `Target: ${prediction.class} (${Math.round(prediction.score * 100)}%)`;
+          ctx.fillStyle = color;
+          const labelText = `Target: ${displayClass} (${Math.round(prediction.score * 100)}%)`;
           const textWidth = ctx.measureText(labelText).width;
           ctx.fillRect(x, y - 24, textWidth + 10, 24);
 
@@ -113,9 +157,8 @@ export default function LiveARScannerView() {
       requestRef.current = requestAnimationFrame(detectFrame);
     };
 
-    video.addEventListener('loadeddata', () => {
-      detectFrame();
-    });
+    // Start the loop immediately (it will wait until readyState === 4 inside)
+    detectFrame();
 
     return () => {
       if (requestRef.current) {
@@ -144,7 +187,21 @@ export default function LiveARScannerView() {
 
       {/* Video & Canvas Overlay Layer */}
       <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-zinc-900">
-        {(!isCameraActive || isModelLoading) && (
+        {errorMsg ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/80 backdrop-blur-sm p-6 text-center">
+             <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 border border-red-500/30">
+               <X size={32} className="text-red-400" />
+             </div>
+             <p className="text-white font-bold text-lg mb-2">Scanner Failed</p>
+             <p className="text-slate-300 text-sm leading-relaxed mb-6">{errorMsg}</p>
+             <button 
+               onClick={() => setRetryCount(c => c + 1)}
+               className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+             >
+               Retry Camera Access
+             </button>
+          </div>
+        ) : (!isCameraActive || isModelLoading) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 backdrop-blur-sm">
             <Loader2 size={48} className="text-emerald-500 animate-spin mb-4" />
             <p className="text-white font-medium">

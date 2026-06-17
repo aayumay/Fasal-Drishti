@@ -1,13 +1,20 @@
-import { ChevronDown, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ChevronDown, CheckCircle2, ArrowLeft, Loader2, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ErrorState from '../components/ErrorState';
+import { treatmentMap } from '../utils/treatmentMap';
+import VendorDrawer from '../components/VendorDrawer';
 
 export default function ActionPlan() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const predictionClass = location.state?.disease || 'Early_Blight';
+  const recommendedChemical = treatmentMap[predictionClass] || treatmentMap.default;
+  
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isVendorDrawerOpen, setIsVendorDrawerOpen] = useState(false);
 
   const loadData = () => {
     setLoading(true);
@@ -28,7 +35,7 @@ export default function ActionPlan() {
   useEffect(() => { loadData(); }, []);
 
   return (
-    <div className="pt-12 px-5 pb-24 h-full flex-1 flex flex-col overflow-y-auto">
+    <div className="pt-6 px-5 pb-24 h-full flex-1 flex flex-col overflow-y-auto">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />
@@ -42,15 +49,6 @@ export default function ActionPlan() {
         <div className="flex-1">
           <div className="space-y-5">
             <div>
-              <label className="text-sm text-brand-text-muted font-medium mb-1.5 block">Select Crop</label>
-              <div className="relative">
-                <select className="input-field appearance-none">
-                  <option>Soybean</option><option>Cotton</option><option>Wheat</option>
-                </select>
-                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none" />
-              </div>
-            </div>
-            <div>
               <label className="text-sm text-brand-text-muted font-medium mb-1.5 block">Area of High Risk Zone</label>
               <div className="relative">
                 <input type="number" value={data ? data.red_zone_acres : 0} readOnly className="input-field bg-brand-bg text-brand-green font-bold border-brand-green/30" />
@@ -63,21 +61,25 @@ export default function ActionPlan() {
                 </p>
               )}
             </div>
-            <div>
-              <label className="text-sm text-brand-text-muted font-medium mb-1.5 block">Select Pesticide</label>
-              <div className="relative">
-                <select className="input-field appearance-none">
-                  <option>Carbendazim 50% WP</option><option>Mancozeb 75% WP</option>
-                </select>
-                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-text-muted pointer-events-none" />
+            
+            {/* AI Prescription Card */}
+            <div className="relative bg-brand-bg border border-brand-green/40 rounded-2xl p-5 shadow-[0_0_15px_rgba(16,185,129,0.15)] overflow-hidden">
+              <div className="absolute top-0 right-0 bg-brand-green text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl flex items-center gap-1">
+                <ShieldCheck size={12} /> AI VERIFIED
               </div>
-            </div>
-            <div>
-              <label className="text-sm text-brand-text-muted font-medium mb-1.5 block">Dose per Acre</label>
-              <div className="relative">
-                <input type="number" defaultValue={340} className="input-field" />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-text-muted text-sm">gram</span>
-              </div>
+              <label className="text-xs text-brand-text-muted font-medium uppercase tracking-wider mb-2 block">
+                Prescribed Treatment for {predictionClass.replace('_', ' ')}
+              </label>
+              <p className="text-lg font-bold text-brand-text mb-4">
+                {recommendedChemical}
+              </p>
+              
+              <button 
+                onClick={() => setIsVendorDrawerOpen(true)}
+                className="w-full flex items-center justify-center gap-2 bg-brand-text hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-sm transition-colors"
+              >
+                <ShoppingCart size={18} /> Procure Recommended Treatment
+              </button>
             </div>
           </div>
 
@@ -118,6 +120,7 @@ export default function ActionPlan() {
       )}
 
       <button className="primary-btn mt-6">Recalculate</button>
+      <VendorDrawer isOpen={isVendorDrawerOpen} onClose={() => setIsVendorDrawerOpen(false)} />
     </div>
   );
 }

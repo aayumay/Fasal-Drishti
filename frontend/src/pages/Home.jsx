@@ -3,24 +3,19 @@ import { Bell, Settings, Wind, Droplets, CloudRain, ChevronRight, CloudSun, MapP
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { CardSkeleton, WeatherSkeleton } from '../components/Skeleton';
-import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
+import { useFarmContext } from '../context/FarmContext';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { myFarms } = useFarmContext();
   const [weather, setWeather] = useState(null);
-  const [farms, setFarms] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('All');
   const [userLocation, setUserLocation] = useState('');
 
   useEffect(() => {
-    // 1. Fetch farms immediately so UI reveals quickly
-    loadFarms();
-
-    // 2. Fetch weather ONLY when hardware GPS resolves
+    // 1. Fetch weather ONLY when hardware GPS resolves
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
@@ -75,63 +70,24 @@ const Home = () => {
     }
   };
 
-  const loadFarms = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const user = auth.currentUser;
-      const token = user ? await user.getIdToken() : 'mock-token';
-
-      let fData = [];
-      const localFarms = localStorage.getItem('fasal_farms');
-      if (localFarms !== null) {
-        try {
-          fData = JSON.parse(localFarms);
-        } catch (e) {
-          console.error("Failed to parse local farms", e);
-        }
-      } else {
-        try {
-          const farmsRes = await fetch('/api/farms', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (farmsRes.ok) {
-            fData = await farmsRes.json();
-          }
-        } catch {
-          fData = [
-            { id: 1, name: 'My Fields', area_acres: 5.0, crop: 'Soybean', score: 82, location: 'Tucson, Arizona', yield: '7200kg/ha' },
-            { id: 2, name: 'My Farm', area_acres: 3.2, crop: 'Cotton', score: 64, location: 'Tucson, Arizona', yield: '7400kg/ha' }
-          ];
-        }
-      }
-
-      if (!fData || fData.length === 0) {
-        setFarms([]);
-        return;
-      }
-
-      const mappedFarms = fData.map(f => ({
-        id: f.id,
-        name: f.name || 'My Farm',
-        size: f.area_acres ? `${f.area_acres} Acres` : 'Unknown',
-        crop: f.crop || 'Unknown',
-        score: f.score || Math.floor(Math.random() * 40) + 60,
-        location: f.location || 'Tucson, Arizona',
-        yield: f.yield || '7200kg/ha',
-        status: f.score > 80 ? 'Healthy' : f.score > 60 ? 'Watch' : 'High Risk',
-        color: f.score > 80 ? 'bg-brand-green' : f.score > 60 ? 'bg-brand-accent' : 'bg-brand-danger'
-      }));
-      setFarms(mappedFarms);
-    } catch (err) {
-      setError('Failed to load your farms. Please check your connection.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Farm context data parsing
+  const displayFarms = myFarms.map(f => {
+    const score = f.healthScore || f.score || Math.floor(Math.random() * 40) + 60;
+    return {
+      id: f.id,
+      name: f.name || 'My Farm',
+      size: f.area_acres ? `${f.area_acres} Acres` : 'Unknown',
+      crop: f.crop || 'Unknown',
+      score: score,
+      location: f.locationName || f.location || 'Unknown Location',
+      yield: f.yield || 'Evaluating...',
+      status: score > 80 ? 'Healthy' : score > 60 ? 'Watch' : 'High Risk',
+      color: score > 80 ? 'bg-brand-green' : score > 60 ? 'bg-brand-accent' : 'bg-brand-danger'
+    };
+  });
 
   return (
-    <div className="pt-12 px-5 pb-6 h-full overflow-y-auto">
+    <div className="pt-6 px-5 pb-6 h-full overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -220,18 +176,11 @@ const Home = () => {
       </div>
 
       <div className="flex flex-col gap-5 pb-28">
-        {loading ? (
-          <>
-            <CardSkeleton />
-            <CardSkeleton />
-          </>
-        ) : error ? (
-          <ErrorState message={error} onRetry={loadData} />
-        ) : farms.length === 0 ? (
+        {displayFarms.length === 0 ? (
           <EmptyState
             icon={Plus}
             title="No Fields Yet"
-            message="Add your first farm field to start receiving AI-powered insights."
+            message="No fields added. Go to the Map to register your first field."
             action={
               <button
                 onClick={() => navigate('/map')}
@@ -242,7 +191,7 @@ const Home = () => {
             }
           />
         ) : (
-          farms.map((farm, idx) => (
+          displayFarms.map((farm, idx) => (
             <div
               key={farm.id}
               className="card overflow-hidden cursor-pointer hover:shadow-md transition-all active:scale-[0.99] animate-fade-in-up"
@@ -263,9 +212,9 @@ const Home = () => {
                     </div>
                     <div className="flex items-center gap-1 text-brand-text-muted text-[12px] mt-0.5">
                       <MapPin size={10} />
-                      <span>{farm.location}</span>
-                      <span className="mx-1">•</span>
-                      <span>{farm.size}</span>
+                      <span className="truncate">{farm.location}</span>
+                      <span className="mx-1 flex-shrink-0">•</span>
+                      <span className="flex-shrink-0">{farm.size}</span>
                     </div>
                   </div>
                 </div>

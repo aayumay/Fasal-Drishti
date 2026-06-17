@@ -1,15 +1,16 @@
 import { ArrowLeft, Bell, Map, Globe, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Settings() {
   const navigate = useNavigate();
   const [unit, setUnit] = useState('metric');
   const [alerts, setAlerts] = useState(true);
-  const [lang, setLang] = useState('en');
+  const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="pt-12 px-5 pb-10 h-full flex-1 overflow-y-auto">
+    <div className="pt-6 px-5 pb-10 h-full flex-1 overflow-y-auto">
       <div className="flex items-center gap-3 mb-8">
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />
@@ -45,11 +46,10 @@ export default function Settings() {
                 <Globe size={18} className="text-brand-text-muted" />
                 <span className="text-sm text-brand-text">Language</span>
               </div>
-              <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs bg-brand-bg px-3 py-1.5 rounded-xl border border-brand-text/10 outline-none text-brand-text font-medium">
+              <select value={language} onChange={e => setLanguage(e.target.value)} className="text-xs bg-brand-bg px-3 py-1.5 rounded-xl border border-brand-text/10 outline-none text-brand-text font-medium">
                 <option value="en">English</option>
                 <option value="hi">हिन्दी</option>
-                <option value="mr">मराठी</option>
-                <option value="pa">ਪੰਜਾਬੀ</option>
+                <option value="gu">ગુજરાતી</option>
               </select>
             </div>
           </div>

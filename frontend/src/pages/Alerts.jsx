@@ -40,7 +40,7 @@ export default function Alerts() {
   const urgentCount = alerts.filter(a => a.urgent).length;
 
   return (
-    <div className="pt-12 px-5 pb-24 h-full flex-1 overflow-y-auto">
+    <div className="pt-6 px-5 pb-24 h-full flex-1 overflow-y-auto">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />

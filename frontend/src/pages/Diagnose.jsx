@@ -97,7 +97,7 @@ export default function Diagnose() {
   };
 
   return (
-    <div className="pt-12 px-5 pb-24 flex-1 overflow-y-auto">
+    <div className="pt-6 px-5 pb-24 flex-1 overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate('/home')} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
@@ -273,8 +273,8 @@ export default function Diagnose() {
 
       {/* Diagnosis Result Modal */}
       {scanModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-6 relative">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-6 pb-10 max-h-[95vh] overflow-y-auto relative">
             <button onClick={() => setScanModalOpen(false)} className="absolute top-4 right-4 text-brand-text-muted hover:text-brand-text bg-brand-bg rounded-full p-1">
               <X size={20} />
             </button>
@@ -288,7 +288,9 @@ export default function Diagnose() {
             ) : scanResult ? (
               <div className="py-2 animate-fade-in">
                 <div className="flex items-center justify-center w-16 h-16 rounded-full mx-auto mb-4 bg-brand-bg">
-                  {scanResult.severity === 'Critical' || scanResult.severity === 'High' ? (
+                  {scanResult.predictionClass === 'Invalid_Image' ? (
+                    <AlertTriangle size={32} className="text-brand-accent" />
+                  ) : scanResult.severity === 'Critical' || scanResult.severity === 'High' ? (
                     <AlertTriangle size={32} className="text-brand-danger" />
                   ) : scanResult.error ? (
                     <X size={32} className="text-brand-danger" />
@@ -306,9 +308,9 @@ export default function Diagnose() {
                   </p>
                 )}
                 
-                <div className="bg-brand-bg rounded-2xl p-4 mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-xs font-bold text-brand-text-muted uppercase">Recommended Action</h4>
+                <div className={`rounded-2xl p-4 mb-6 ${scanResult.predictionClass === 'Invalid_Image' ? 'bg-orange-400/10 border border-orange-400/50' : 'bg-brand-bg'}`}>
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="text-xs font-bold text-brand-text-muted uppercase mt-1">Recommended Action</h4>
                     <VoiceSpeakerButton text={scanResult.action} lang={language} />
                   </div>
                   <p className="text-sm text-brand-text font-medium leading-relaxed">
@@ -316,7 +318,7 @@ export default function Diagnose() {
                   </p>
                 </div>
 
-                {!scanResult.error && (
+                {!scanResult.error && scanResult.predictionClass !== 'Invalid_Image' && (
                   <button 
                     onClick={() => setIsVendorDrawerOpen(true)}
                     className="mb-4 flex items-center justify-center w-full gap-2 bg-brand-text hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-sm transition-colors"
@@ -325,9 +327,11 @@ export default function Diagnose() {
                   </button>
                 )}
                 
-                <button onClick={() => setScanModalOpen(false)} className="primary-btn w-full">
-                  Done
-                </button>
+                <div className="mt-4">
+                  <button onClick={() => setScanModalOpen(false)} className="primary-btn w-full">
+                    {scanResult.predictionClass === 'Invalid_Image' ? 'Try Again' : 'Done'}
+                  </button>
+                </div>
               </div>
             ) : null}
           </div>
