@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { CloudRain, Sun, TrendingUp, AlertTriangle, Cloud, MapPin, Droplets, Wind, Thermometer, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [locationName, setLocationName] = useState('Fetching location...');
   const [weatherData, setWeatherData] = useState(null);
   const [marketPrices, setMarketPrices] = useState([]);
@@ -69,7 +71,7 @@ export default function Dashboard() {
       {/* Header with Location */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Welcome back, Kisaan! 👋</h1>
+          <h1 className="text-2xl font-bold">{t('welcome_back')}</h1>
           <div className="flex items-center text-slate-400 text-sm mt-1.5 gap-1.5">
             <span className="font-medium text-emerald-400">{locationName}</span>
           </div>
@@ -78,7 +80,7 @@ export default function Dashboard() {
 
       {/* Weather Metrics */}
       <h2 className="text-lg font-semibold text-emerald-400 mb-2 flex items-center gap-2">
-        <Cloud size={20} /> Current Conditions
+        <Cloud size={20} /> {t('current_conditions')}
       </h2>
       
       {isLoading ? (
@@ -102,14 +104,14 @@ export default function Dashboard() {
           <div className="glass-panel p-4 flex flex-col items-center justify-center border-t-2 border-t-amber-400/50 hover:bg-slate-800/80 transition-colors">
             <Thermometer size={24} className="text-amber-400 mb-2" />
             <span className="text-2xl font-bold">{weatherData.temp}°C</span>
-            <span className="text-xs text-slate-400 mt-1">Temperature</span>
+            <span className="text-xs text-slate-400 mt-1">{t('temperature')}</span>
           </div>
           
           {/* Humidity */}
           <div className="glass-panel p-4 flex flex-col items-center justify-center border-t-2 border-t-blue-400/50 hover:bg-slate-800/80 transition-colors">
             <Droplets size={24} className="text-blue-400 mb-2" />
             <span className="text-2xl font-bold">{weatherData.humidity || 65}%</span>
-            <span className="text-xs text-slate-400 mt-1">Humidity</span>
+            <span className="text-xs text-slate-400 mt-1">{t('humidity')}</span>
           </div>
           
           {/* Wind Speed */}
@@ -119,21 +121,21 @@ export default function Dashboard() {
               <span className="text-2xl font-bold">{weatherData.windSpeed || 10}</span>
               <span className="text-xs font-semibold">km/h</span>
             </div>
-            <span className="text-xs text-slate-400 mt-1 truncate max-w-[100px]">{weatherData.windDirection || 'NE'}</span>
+            <span className="text-xs text-slate-400 mt-1 truncate max-w-[100px]">{t('wind_speed')}</span>
           </div>
           
           {/* Rain Probability */}
           <div className="glass-panel p-4 flex flex-col items-center justify-center border-t-2 border-t-indigo-400/50 hover:bg-slate-800/80 transition-colors">
             <CloudRain size={24} className="text-indigo-400 mb-2" />
             <span className="text-2xl font-bold">{weatherData.rainProb}%</span>
-            <span className="text-xs text-slate-400 mt-1">Rain Prob</span>
+            <span className="text-xs text-slate-400 mt-1">{t('rain_prob')}</span>
           </div>
 
           {/* Advisory */}
           <div className="col-span-2 bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 backdrop-blur-sm mt-2 flex items-start gap-3">
             <AlertTriangle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-medium text-amber-400 mb-1 text-sm">AI Advisory</h3>
+              <h3 className="font-medium text-amber-400 mb-1 text-sm">{t('ai_advisory')}</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {weatherData.advisory}
               </p>
@@ -145,7 +147,7 @@ export default function Dashboard() {
       {/* Market Trends */}
       <div className="glass-panel p-6 mt-6">
         <h2 className="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-          <TrendingUp size={20} /> Mandi Prices (Live)
+          <TrendingUp size={20} /> {t('mandi_prices')}
         </h2>
         {isLoading ? (
           <div className="space-y-3">
@@ -173,7 +175,7 @@ export default function Dashboard() {
               </div>
             ))}
             {marketPrices.length === 0 && (
-              <p className="text-sm text-slate-400 text-center py-2">No market data currently available</p>
+              <p className="text-sm text-slate-400 text-center py-2">{t('no_market_data')}</p>
             )}
           </div>
         )}
@@ -185,13 +187,13 @@ export default function Dashboard() {
           <div className="bg-emerald-500/20 p-4 rounded-full text-emerald-400 group-hover:scale-110 transition-transform">
             <span className="text-3xl">📷</span>
           </div>
-          <span className="font-medium">Scan Crop</span>
+          <span className="font-medium">{t('scan_leaf')}</span>
         </Link>
         <Link to="/map" className="glass-panel p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-slate-800/80 transition-colors group">
           <div className="bg-blue-500/20 p-4 rounded-full text-blue-400 group-hover:scale-110 transition-transform">
             <span className="text-3xl">🗺️</span>
           </div>
-          <span className="font-medium">Farm Map</span>
+          <span className="font-medium">{t('farm_map')}</span>
         </Link>
       </div>
     </div>

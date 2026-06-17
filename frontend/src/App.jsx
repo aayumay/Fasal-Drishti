@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { LanguageProvider } from './context/LanguageContext';
+import Navbar from './components/Navbar';
 import Splash from './pages/Splash';
 import Login from './pages/Login';
 import ProfileSetup from './pages/ProfileSetup';
@@ -12,13 +14,16 @@ import Settings from './pages/Settings';
 import Help from './pages/Help';
 import About from './pages/About';
 import BottomNavigation from './components/BottomNavigation';
+import LiveARScannerView from './pages/LiveARScannerView';
 
 function App() {
   return (
-    <Router>
-      <div className="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg">
-        <Routes>
-          <Route path="/" element={<Navigate to="/splash" replace />} />
+    <LanguageProvider>
+      <Router>
+        <div className="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg pt-14">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Navigate to="/splash" replace />} />
           <Route path="/splash" element={<Splash />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
@@ -31,10 +36,12 @@ function App() {
           <Route path="/settings" element={<div className="flex flex-col h-full"><Settings /><BottomNavigation active="menu" /></div>} />
           <Route path="/help" element={<div className="flex flex-col h-full"><Help /><BottomNavigation active="menu" /></div>} />
           <Route path="/about" element={<div className="flex flex-col h-full"><About /><BottomNavigation active="menu" /></div>} />
+          <Route path="/scanner" element={<LiveARScannerView />} />
           <Route path="*" element={<Navigate to="/splash" replace />} />
-        </Routes>
-      </div>
-    </Router>
+          </Routes>
+        </div>
+      </Router>
+    </LanguageProvider>
   );
 }
 

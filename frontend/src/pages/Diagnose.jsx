@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { FactorsSkeleton } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
+import VoiceSpeakerButton from '../components/VoiceSpeakerButton';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Diagnose() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherError, setWeatherError] = useState(null);
@@ -302,7 +305,10 @@ export default function Diagnose() {
                 )}
                 
                 <div className="bg-brand-bg rounded-2xl p-4 mb-6">
-                  <h4 className="text-xs font-bold text-brand-text-muted uppercase mb-2">Recommended Action</h4>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-xs font-bold text-brand-text-muted uppercase">Recommended Action</h4>
+                    <VoiceSpeakerButton text={scanResult.action} lang={language} />
+                  </div>
                   <p className="text-sm text-brand-text font-medium leading-relaxed">
                     {scanResult.action}
                   </p>

@@ -1,55 +1,70 @@
-import { NavLink } from 'react-router-dom';
-import { Home, ScanLine, Map as MapIcon, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { Globe, ChevronDown, Scan } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
+  const { language, setLanguage } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const languages = [
+    { code: 'en', label: 'English' },
+    { code: 'hi', label: 'हिंदी' },
+    { code: 'gu', label: 'ગુજરાતી' }
+  ];
+
+  const currentLang = languages.find(l => l.code === language) || languages[0];
+
   return (
-    <>
-      {/* Top Navbar for Desktop */}
-      <nav className="hidden md:flex items-center justify-between px-8 py-4 glass-panel m-4 sticky top-4 z-50">
-        <div className="flex items-center gap-3 text-emerald-400 font-bold text-2xl tracking-wide">
-          <span className="text-3xl">🌱</span> FasalDrishti
+    <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-slate-900/60 backdrop-blur-md border-b border-slate-700/50 shadow-sm">
+      <div className="max-w-md mx-auto flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-400">
+            🌱
+          </div>
+          <span className="font-bold text-lg text-emerald-400 tracking-wide">Fasal-Drishti</span>
         </div>
-        <div className="flex items-center gap-6">
-          <NavLink to="/dashboard" className={({isActive}) => isActive ? "text-emerald-400" : "text-slate-300 hover:text-white transition-colors"}>Dashboard</NavLink>
-          <NavLink to="/diagnose" className={({isActive}) => isActive ? "text-emerald-400" : "text-slate-300 hover:text-white transition-colors"}>Diagnose</NavLink>
-          <NavLink to="/map" className={({isActive}) => isActive ? "text-emerald-400" : "text-slate-300 hover:text-white transition-colors"}>Farm Map</NavLink>
-          <button className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors ml-4">
-            <LogOut size={18} /> Logout
+
+        <div className="relative flex items-center gap-3">
+          <button 
+            onClick={() => navigate('/scanner')}
+            className="flex items-center justify-center w-8 h-8 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-full transition-colors border border-emerald-500/30 shadow-sm"
+            title="AR Scanner"
+          >
+            <Scan size={16} />
           </button>
-        </div>
-      </nav>
+          <div className="relative">
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 text-sm font-medium px-3 py-1.5 rounded-full transition-colors border border-slate-700/50"
+          >
+            <Globe size={16} className="text-emerald-400" />
+            <span>{currentLang.label}</span>
+            <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-      {/* Mobile Header */}
-      <header className="md:hidden flex items-center justify-between p-4 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
-         <div className="flex items-center gap-2 text-emerald-400 font-bold text-xl tracking-wide">
-          <span className="text-2xl">🌱</span> FasalDrishti
-        </div>
-        <button className="text-slate-400 p-2">
-           <LogOut size={20} />
-        </button>
-      </header>
-
-      {/* Bottom Navigation for Mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-panel !rounded-none !rounded-t-2xl z-50 px-6 py-3 flex justify-between items-center pb-safe">
-        <NavLink to="/dashboard" className={({isActive}) => `flex flex-col items-center gap-1 ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
-          <Home size={24} />
-          <span className="text-[10px] font-medium">Home</span>
-        </NavLink>
-        <NavLink to="/diagnose" className={({isActive}) => `flex flex-col items-center gap-1 ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
-          {({ isActive }) => (
-            <>
-              <div className={`p-3 rounded-full ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-300'} -mt-6 border-4 border-slate-900 shadow-xl`}>
-                 <ScanLine size={28} />
-              </div>
-              <span className="text-[10px] font-medium mt-1">Scan</span>
-            </>
+          {isOpen && (
+            <div className="absolute right-0 mt-2 w-32 bg-slate-800/90 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-xl overflow-hidden py-1 animate-fade-in">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => {
+                    setLanguage(lang.code);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                    language === lang.code ? 'bg-emerald-500/20 text-emerald-400 font-semibold' : 'hover:bg-slate-700/50'
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
           )}
-        </NavLink>
-        <NavLink to="/map" className={({isActive}) => `flex flex-col items-center gap-1 ${isActive ? "text-emerald-400" : "text-slate-400"}`}>
-          <MapIcon size={24} />
-          <span className="text-[10px] font-medium">Map</span>
-        </NavLink>
-      </nav>
-    </>
+        </div>
+        </div>
+      </div>
+    </nav>
   );
 }
