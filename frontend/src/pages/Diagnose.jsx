@@ -5,6 +5,7 @@ import { FactorsSkeleton } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
 import VoiceSpeakerButton from '../components/VoiceSpeakerButton';
 import { useLanguage } from '../context/LanguageContext';
+import VendorDrawer from '../components/VendorDrawer';
 
 export default function Diagnose() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function Diagnose() {
   const [scanLoading, setScanLoading] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [isVendorDrawerOpen, setIsVendorDrawerOpen] = useState(false);
 
   useEffect(() => {
     const localFarms = localStorage.getItem('fasal_farms');
@@ -313,6 +315,15 @@ export default function Diagnose() {
                     {scanResult.action}
                   </p>
                 </div>
+
+                {!scanResult.error && (
+                  <button 
+                    onClick={() => setIsVendorDrawerOpen(true)}
+                    className="mb-4 flex items-center justify-center w-full gap-2 bg-gradient-to-r from-emerald-600 to-emerald-400 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] animate-pulse transition-shadow border border-emerald-400/50"
+                  >
+                    <span className="text-lg">🛒</span> Procure Recommended Treatment
+                  </button>
+                )}
                 
                 <button onClick={() => setScanModalOpen(false)} className="primary-btn w-full">
                   Done
@@ -322,6 +333,8 @@ export default function Diagnose() {
           </div>
         </div>
       )}
+
+      <VendorDrawer isOpen={isVendorDrawerOpen} onClose={() => setIsVendorDrawerOpen(false)} />
     </div>
   );
 }
