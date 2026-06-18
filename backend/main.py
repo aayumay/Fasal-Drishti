@@ -185,7 +185,7 @@ async def get_weather(lat: float = 28.7041, lon: float = 77.1025):
     """
     Fetch real live weather from Open-Meteo free API using httpx async client.
     """
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&hourly=relative_humidity_2m"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&hourly=relative_humidity_2m,precipitation_probability,precipitation"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, timeout=5.0)
@@ -197,28 +197,43 @@ async def get_weather(lat: float = 28.7041, lon: float = 77.1025):
             wind_speed = cw.get("windspeed", 0)
             wind_dir = cw.get("winddirection", 0)
             weather_code = cw.get("weathercode", 0)
+            current_time = cw.get("time")
+
+            try:
+                time_index = data["hourly"]["time"].index(current_time)
+                rain_mm = data["hourly"]["precipitation"][time_index]
+                rain_prob = data["hourly"]["precipitation_probability"][time_index]
+                humidity = data["hourly"]["relative_humidity_2m"][time_index]
+            except (KeyError, ValueError):
+                rain_mm = 0
+                rain_prob = 0
+                humidity = 50
             
-            # Simplified WMO Code interpretation
-            condition = "Clear"
-            rain_prob = 10
+            # WMO Code interpretation
             if weather_code in [61, 63, 65, 80, 81, 82]:
                 condition = "Rain"
-                rain_prob = 80
             elif weather_code >= 95:
                 condition = "Thunderstorm"
-                rain_prob = 95
             elif weather_code > 1:
                 condition = "Cloudy"
-                rain_prob = 30
+            else:
+                condition = "Clear"
                 
-            advisory = "Clear weather ahead. Good time for pesticide application if needed."
-            if rain_prob > 50:
-                advisory = f"{condition} expected. Avoid spraying pesticides today as they might wash away."
+            # Smart Agricultural Advisory Logic
+            if rain_mm > 0 or rain_prob > 40:
+                advisory = f"{condition} expected ({rain_prob}% chance of rain). DO NOT spray pesticides; they will wash away and pollute groundwater."
+            elif wind_speed > 15:
+                advisory = f"High winds ({wind_speed} km/h). Avoid spraying pesticides to prevent chemical drift to non-target areas."
+            elif temp > 35:
+                advisory = f"Extreme heat ({temp}°C). Spraying now may cause leaf burn. Wait until late evening."
+            else:
+                advisory = "Optimal weather. Good time for safe pesticide or fertilizer application."
                 
             return {
                 "temp": temp, 
                 "condition": condition, 
-                "rainProb": rain_prob, 
+                "rainProb": rain_mm, # Frontend renders this as 'mm'
+                "humidity": humidity,
                 "advisory": advisory,
                 "windSpeed": wind_speed,
                 "windDirection": wind_dir
