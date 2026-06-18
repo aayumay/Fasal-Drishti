@@ -46,10 +46,14 @@ export const FarmProvider = ({ children }) => {
     });
   };
 
+  const updateFarmHealth = (farmId, newHealthScore) => {
+    setMyFarms(prev => prev.map(f => f.id === farmId ? { ...f, healthScore: newHealthScore } : f));
+  };
+
   const activeFarm = myFarms.find(f => f.id === activeFarmId) || myFarms[0] || null;
 
   return (
-    <FarmContext.Provider value={{ myFarms, setMyFarms, activeFarmId, setActiveFarmId, activeFarm, addFarm, removeFarm }}>
+    <FarmContext.Provider value={{ myFarms, setMyFarms, activeFarmId, setActiveFarmId, activeFarm, addFarm, removeFarm, updateFarmHealth }}>
       {children}
     </FarmContext.Provider>
   );

@@ -14,7 +14,7 @@ const BottomNavigation = ({ active }) => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-brand-text/10 z-50 safe-area-bottom"
+      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-brand-text/10 z-[5000] safe-area-bottom"
       style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
     >
       <div className="flex justify-between items-center px-3 py-1.5">

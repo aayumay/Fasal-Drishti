@@ -6,11 +6,11 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-brand-bg/90 backdrop-blur-md border-b border-brand-text/5 shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-[5000] px-4 py-3 bg-brand-bg/90 backdrop-blur-md border-b border-brand-text/5 shadow-sm">
       <div className="max-w-md mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brand-green/10 rounded-lg flex items-center justify-center text-brand-green">
-            🌱
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-bold text-lg text-brand-green tracking-wide">Fasal-Drishti</span>
         </div>

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { FarmProvider } from './context/FarmContext';
+import { UserProvider } from './context/UserContext';
 import Navbar from './components/Navbar';
 import Splash from './pages/Splash';
 import Login from './pages/Login';
@@ -20,9 +21,10 @@ import LiveARScannerView from './pages/LiveARScannerView';
 function App() {
   return (
     <LanguageProvider>
-      <FarmProvider>
-        <Router>
-          <div className="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg pt-14">
+      <UserProvider>
+        <FarmProvider>
+          <Router>
+            <div className="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg pt-14">
           <Navbar />
           <Routes>
             <Route path="/" element={<Navigate to="/splash" replace />} />
@@ -41,9 +43,10 @@ function App() {
           <Route path="/scanner" element={<LiveARScannerView />} />
           <Route path="*" element={<Navigate to="/splash" replace />} />
           </Routes>
-        </div>
-      </Router>
-      </FarmProvider>
+            </div>
+          </Router>
+        </FarmProvider>
+      </UserProvider>
     </LanguageProvider>
   );
 }

@@ -5,10 +5,12 @@ import { auth } from '../firebase';
 import { CardSkeleton, WeatherSkeleton } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import { useFarmContext } from '../context/FarmContext';
+import { useUserContext } from '../context/UserContext';
 
 const Home = () => {
   const navigate = useNavigate();
   const { myFarms } = useFarmContext();
+  const { userName } = useUserContext();
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [filter, setFilter] = useState('All');
@@ -74,17 +76,25 @@ const Home = () => {
 
   // Farm context data parsing
   const displayFarms = myFarms.map(f => {
-    const score = f.healthScore || f.score || Math.floor(Math.random() * 40) + 60;
+    const score = f.healthScore !== undefined && f.healthScore !== null ? f.healthScore : undefined;
+    
+    let color = 'bg-brand-text/50';
+    if (score !== undefined) {
+      if (score > 80) color = 'bg-brand-green';
+      else if (score >= 50) color = 'bg-orange-400';
+      else color = 'bg-brand-danger';
+    }
+
     return {
       id: f.id,
       name: f.name || 'My Farm',
       size: f.area_acres ? `${f.area_acres} Acres` : 'Unknown',
       crop: f.crop || 'Unknown',
-      score: score,
+      scoreDisplay: score !== undefined ? `${score}%` : 'Evaluating...',
       location: f.locationName || f.location || 'Unknown Location',
       yield: f.yield || 'Evaluating...',
-      status: score > 80 ? 'Healthy' : score > 60 ? 'Watch' : 'High Risk',
-      color: score > 80 ? 'bg-brand-green' : score > 60 ? 'bg-brand-accent' : 'bg-brand-danger'
+      status: score > 80 ? 'Healthy' : score >= 50 ? 'Watch' : 'High Risk',
+      color: color
     };
   });
 
@@ -95,8 +105,8 @@ const Home = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Sprout size={20} className="text-brand-green" strokeWidth={1.5} />
-            <h1 className="text-[22px] font-bold text-brand-text">
-              Hello, Farmer
+            <h1 className="text-[22px] font-bold text-brand-text truncate max-w-[200px]">
+              Hello, {userName ? userName : 'Farmer'}
             </h1>
           </div>
           <div className="flex items-center gap-1.5 text-brand-text-muted text-sm">
@@ -129,7 +139,7 @@ const Home = () => {
               <CloudSun size={36} className="text-brand-accent" strokeWidth={1.5} />
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-3 pt-4 border-t border-brand-text/5">
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-brand-text/5">
             <div className="flex flex-col items-center gap-1">
               <Wind size={15} className="text-brand-text-muted" />
               <span className="text-xs font-semibold text-brand-text">{weather.wind} km/h</span>
@@ -145,12 +155,13 @@ const Home = () => {
               <span className="text-xs font-semibold text-brand-text">{weather.rainProb} mm</span>
               <span className="text-[9px] text-brand-text-muted font-medium">Rain</span>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] text-brand-text-muted font-bold uppercase">Temp</span>
-              <span className="text-xs font-semibold text-brand-text">{weather.tempChange}</span>
-              <span className="text-[9px] text-brand-text-muted font-medium">Change</span>
-            </div>
           </div>
+          {weather.tempChange && (
+            <div className="mt-4 pt-3 border-t border-brand-text/5 text-center">
+              <span className="text-[10px] text-brand-text-muted font-bold uppercase block mb-1">Advisory</span>
+              <span className="text-xs font-medium text-brand-text leading-relaxed block px-2">{weather.tempChange}</span>
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -226,7 +237,7 @@ const Home = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                 <div className="absolute bottom-3 left-3 flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${farm.color}`}></div>
-                  <span className="text-white text-xs font-bold drop-shadow-md">Health Score: {farm.score}%</span>
+                  <span className="text-white text-xs font-bold drop-shadow-md">Health Score: {farm.scoreDisplay}</span>
                 </div>
               </div>
             </div>

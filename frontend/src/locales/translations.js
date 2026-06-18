@@ -14,7 +14,20 @@ export const translations = {
     disease_detected: "Disease Detected",
     high_risk: "High Risk",
     pesticide_saved: "Pesticide Saved",
-    farm_area: "Farm Area"
+    farm_area: "Farm Area",
+    settings: "Settings",
+    preferences: "Preferences",
+    units: "Units",
+    metric: "Metric",
+    imperial: "Imperial",
+    push_alerts: "Push Alerts",
+    language: "Language",
+    account: "Account",
+    farmer_name: "Farmer Name",
+    enter_name: "Enter your name",
+    save: "Save",
+    saved: "Saved",
+    advanced_profile_setup: "Advanced Profile Setup"
   },
   hi: {
     scan_leaf: "पत्ती स्कैन करें",
@@ -31,7 +44,20 @@ export const translations = {
     disease_detected: "बीमारी का पता चला",
     high_risk: "उच्च जोखिम",
     pesticide_saved: "कीटनाशक की बचत",
-    farm_area: "खेत का क्षेत्रफल"
+    farm_area: "खेत का क्षेत्रफल",
+    settings: "सेटिंग्स",
+    preferences: "प्राथमिकताएं",
+    units: "इकाइयाँ",
+    metric: "मीट्रिक",
+    imperial: "इंपीरियल",
+    push_alerts: "पुश अलर्ट",
+    language: "भाषा",
+    account: "खाता",
+    farmer_name: "किसान का नाम",
+    enter_name: "अपना नाम दर्ज करें",
+    save: "सेव करें",
+    saved: "सेव हो गया",
+    advanced_profile_setup: "उन्नत प्रोफ़ाइल सेटअप"
   },
   gu: {
     scan_leaf: "પાંદડું સ્કેન કરો",
@@ -48,6 +74,19 @@ export const translations = {
     disease_detected: "રોગ પકડાયો",
     high_risk: "ઉચ્ચ જોખમ",
     pesticide_saved: "જંતુનાશક બચાવાયું",
-    farm_area: "ખેતરનો વિસ્તાર"
+    farm_area: "ખેતરનો વિસ્તાર",
+    settings: "સેટિંગ્સ",
+    preferences: "પસંદગીઓ",
+    units: "એકમો",
+    metric: "મેટ્રિક",
+    imperial: "ઇમ્પીરીયલ",
+    push_alerts: "પુશ એલર્ટ્સ",
+    language: "ભાષા",
+    account: "ખાતું",
+    farmer_name: "ખેડૂતનું નામ",
+    enter_name: "તમારું નામ દાખલ કરો",
+    save: "સાચવો",
+    saved: "સાચવેલ",
+    advanced_profile_setup: "અદ્યતન પ્રોફાઇલ સેટઅપ"
   }
 };
