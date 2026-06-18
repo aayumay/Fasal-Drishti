@@ -96,7 +96,7 @@ export default function MapModule() {
           geometry: { type: "Polygon", coordinates: [geoJsonCoords] }
         }
       };
-      const agroRes = await fetch(`http://api.agromonitoring.com/agro/1.0/polygons?appid=${import.meta.env.VITE_AGRO_API_KEY}`, {
+      const agroRes = await fetch(`https://api.agromonitoring.com/agro/1.0/polygons?appid=${import.meta.env.VITE_AGRO_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(geoJson)
@@ -166,13 +166,13 @@ export default function MapModule() {
       const start = end - (30 * 24 * 60 * 60);
       const apiKey = import.meta.env.VITE_AGRO_API_KEY;
 
-      const statRes = await fetch(`http://api.agromonitoring.com/agro/1.0/image/stat?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
+      const statRes = await fetch(`https://api.agromonitoring.com/agro/1.0/image/stat?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
       if (statRes.ok) {
         const stats = await statRes.json();
         setSatelliteData(stats);
       }
 
-      const historyRes = await fetch(`http://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
+      const historyRes = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
       if (historyRes.ok) {
         const history = await historyRes.json();
         if (history && history.length > 0) {

@@ -16,7 +16,7 @@ if "farm_id" not in st.session_state:
 with st.sidebar:
     st.header("🔐 Farm Login")
     if not st.session_state.farm_id:
-        farm_input = st.text_input("Enter Farm ID (e.g. FARM-101)")
+        farm_input = st.text_input("Enter Farm ID (e.g. FARM-1)")
         if st.button("Login") and farm_input:
             st.session_state.farm_id = farm_input
             if hasattr(st, "rerun"): st.rerun()
