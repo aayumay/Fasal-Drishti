@@ -12,7 +12,7 @@ export default function Navbar() {
           <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
             <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain mix-blend-multiply" />
           </div>
-          <span className="font-bold text-lg text-brand-green tracking-wide">Fasal-Drishti</span>
+          <span className="font-serif font-bold text-lg text-brand-green tracking-wide">Fasal-Drishti</span>
         </div>
 
         <div className="relative flex items-center gap-3">
