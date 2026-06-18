@@ -200,11 +200,13 @@ async def get_weather(lat: float = 28.7041, lon: float = 77.1025):
             current_time = cw.get("time")
 
             try:
-                time_index = data["hourly"]["time"].index(current_time)
+                # Open-Meteo current_weather time might be like '2023-10-15T12:15', but hourly is '2023-10-15T12:00'
+                rounded_time = current_time[:14] + "00" if current_time else None
+                time_index = data["hourly"]["time"].index(rounded_time)
                 rain_mm = data["hourly"]["precipitation"][time_index]
                 rain_prob = data["hourly"]["precipitation_probability"][time_index]
                 humidity = data["hourly"]["relative_humidity_2m"][time_index]
-            except (KeyError, ValueError):
+            except (KeyError, ValueError, TypeError):
                 rain_mm = 0
                 rain_prob = 0
                 humidity = 50
