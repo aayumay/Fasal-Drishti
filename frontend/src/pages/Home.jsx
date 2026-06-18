@@ -56,15 +56,17 @@ const Home = () => {
           temp: wData.temp, 
           condition: wData.condition, 
           rainProb: wData.rainProb, 
-          humidity: wData.humidity || 65, 
+          humidity: wData.humidity, 
           wind: wData.windSpeed, 
-          tempChange: '+1°' 
+          tempChange: wData.advisory || ''
         });
       } else {
-        setWeather({ temp: 34, condition: 'Clear', rainProb: 5, humidity: 88, wind: 5, tempChange: '+2°' });
+        console.error("Weather API returned error:", weatherRes.status);
+        setWeather(null);
       }
-    } catch {
-      setWeather({ temp: 34, condition: 'Clear', rainProb: 5, humidity: 88, wind: 5, tempChange: '+2°' });
+    } catch (err) {
+      console.error("Weather fetch failed:", err);
+      setWeather(null);
     } finally {
       setWeatherLoading(false);
     }

@@ -110,6 +110,27 @@ export default function MapModule() {
     }
 
     try {
+      // Fetch real NDVI health score from AgroMonitoring if we got a polygonId
+      let healthScore = null;
+      if (polygonId) {
+        try {
+          const end = Math.floor(Date.now() / 1000);
+          const start = end - (30 * 24 * 60 * 60);
+          const apiKey = import.meta.env.VITE_AGRO_API_KEY;
+          const statRes = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start}&end=${end}&appid=${apiKey}`);
+          if (statRes.ok) {
+            const history = await statRes.json();
+            if (history && history.length > 0) {
+              const latest = history[0];
+              const ndviMean = latest.data?.mean ?? latest.mean ?? 0;
+              healthScore = Math.max(0, Math.round(ndviMean * 100));
+            }
+          }
+        } catch (ndviErr) {
+          console.warn("Could not fetch real NDVI score:", ndviErr);
+        }
+      }
+
       const newFarm = {
         id: Date.now().toString(),
         name: `Farm ${String.fromCharCode(65 + farms.length)}`,
@@ -118,7 +139,7 @@ export default function MapModule() {
         coordinates: newPolygonCoords,
         locationName,
         polygonId,
-        healthScore: Math.floor(Math.random() * 40) + 60,
+        healthScore,
         status: 'Active'
       };
       
@@ -166,22 +187,24 @@ export default function MapModule() {
       const start = end - (30 * 24 * 60 * 60);
       const apiKey = import.meta.env.VITE_AGRO_API_KEY;
 
-      const statRes = await fetch(`https://api.agromonitoring.com/agro/1.0/image/stat?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
-      if (statRes.ok) {
-        const stats = await statRes.json();
-        setSatelliteData(stats);
-      }
-
       const historyRes = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
       if (historyRes.ok) {
         const history = await historyRes.json();
         if (history && history.length > 0) {
-          const latest = history[history.length - 1];
+          // AgroMonitoring returns latest data at index 0
+          const latest = history[0];
           setNdviTileUrl(latest.tile.ndvi);
+          if (latest.data) {
+             setSatelliteData(latest.data);
+          }
+        } else {
+          console.warn("Satellite imagery not yet available for this polygon.");
+          setSatelliteData(null);
         }
       }
     } catch (e) {
       console.error("Satellite fetch failed:", e);
+      setSatelliteData(null);
     } finally {
       setLoadingSatellite(false);
     }
@@ -210,8 +233,6 @@ export default function MapModule() {
   }, [activeFarm]);
 
   useEffect(() => { requestLocation(true); }, []);
-
-  const farmScore = activeFarm?.healthScore || activeFarm?.score || 82;
 
   const generateGridCells = (coords, score) => {
     if (!coords || coords.length < 3) return [];
@@ -305,13 +326,15 @@ export default function MapModule() {
     return sign * y;
   };
 
-  let healthyPct = 87;
-  let watchPct = 6;
-  let highRiskPct = 3;
-  let criticalPct = 4;
-  let farmScore = activeFarm?.healthScore || activeFarm?.score || 82;
+  let healthyPct = 0;
+  let watchPct = 0;
+  let highRiskPct = 0;
+  let criticalPct = 100;
+  // Use nullish coalescing so that 0 and null are handled correctly
+  let farmScore = activeFarm?.healthScore ?? activeFarm?.score ?? null;
 
   if (satelliteData && satelliteData.mean !== undefined) {
+    // Real satellite NDVI data is available — use statistical distribution
     const mean = satelliteData.mean;
     const std = satelliteData.std || 0.0001;
     const cdf = (x) => 0.5 * (1 + erf((x - mean) / (std * Math.sqrt(2))));
@@ -321,12 +344,18 @@ export default function MapModule() {
     watchPct = Math.max(0, Math.round((cdf(0.6) - cdf(0.4)) * 100));
     healthyPct = Math.max(0, 100 - criticalPct - highRiskPct - watchPct);
     farmScore = Math.max(0, Math.round(mean * 100));
-  } else if (activeFarm) {
+  } else if (farmScore !== null && farmScore !== undefined) {
+    // We have a saved NDVI-derived score from farm creation
     healthyPct = farmScore;
     const remaining = 100 - healthyPct;
     watchPct = Math.floor(remaining * 0.5);
     highRiskPct = Math.floor(remaining * 0.3);
     criticalPct = remaining - watchPct - highRiskPct;
+  } else {
+    // No satellite data available yet — show as unknown/critical
+    farmScore = 0;
+    healthyPct = 0;
+    criticalPct = 100;
   }
 
   // 1. Force area to be a valid number, default to 0
@@ -487,7 +516,7 @@ export default function MapModule() {
         )}
 
         <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm text-[9px] text-brand-text-muted text-center py-1.5 z-[2000] border-b border-brand-text/5 uppercase tracking-widest font-semibold">
-          Data Source: Sentinel-2 Based Model Simulation for MVP
+          {satelliteData ? 'Data Source: Real-Time Sentinel-2 Satellite NDVI' : 'Data Source: Awaiting Satellite Data...'}
         </div>
 
         {mapCenter ? (
@@ -530,17 +559,14 @@ export default function MapModule() {
                   positions={activeFarm.coordinates}
                   pathOptions={{ color: '#ffffff', weight: 2, fillOpacity: 0 }}
                 />
-                {ndviTileUrl ? (
-                  <TileLayer url={ndviTileUrl} opacity={0.75} />
-                ) : (
-                  generateGridCells(activeFarm.coordinates, farmScore).map((cell, idx) => (
-                    <Rectangle
-                      key={idx}
-                      bounds={cell.bounds}
-                      pathOptions={{ color: cell.color, weight: 1, fillOpacity: 0.45, stroke: false }}
-                    />
-                  ))
-                )}
+                {/* Always render the colored grid cells using the real satellite score */}
+                {generateGridCells(activeFarm.coordinates, farmScore ?? 0).map((cell, idx) => (
+                  <Rectangle
+                    key={idx}
+                    bounds={cell.bounds}
+                    pathOptions={{ color: cell.color, weight: 1, fillOpacity: 0.5, stroke: false }}
+                  />
+                ))}
               </>
             )}
 
