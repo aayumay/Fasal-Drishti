@@ -24,7 +24,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="pt-6 px-5 pb-10 h-full flex-1 overflow-y-auto">
+    <div className="pt-6 px-5 pb-28 h-full flex-1 overflow-y-auto">
       <div className="flex items-center gap-3 mb-8">
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />
