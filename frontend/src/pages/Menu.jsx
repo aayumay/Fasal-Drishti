@@ -27,19 +27,16 @@ export default function Menu() {
         <MenuItem icon={SettingsIcon} iconBg="bg-blue-500/10" iconColor="text-blue-500" title="Settings" subtitle="App preferences and units" onClick={() => navigate('/settings')} />
         <MenuItem icon={HelpCircle} iconBg="bg-brand-accent/10" iconColor="text-brand-accent" title="Help & Support" subtitle="Contact our agronomy team" onClick={() => navigate('/help')} />
         <MenuItem icon={Info} iconBg="bg-purple-500/10" iconColor="text-purple-500" title="About Fasal-Drishti" subtitle="Version 1.0 (Hackathon Edition)" onClick={() => navigate('/about')} />
+      </div>
 
-        <div
+      <div className="mt-16 mb-8 w-full md:w-auto md:max-w-[280px] mx-auto">
+        <button 
           onClick={handleLogout}
-          className="card flex items-center gap-4 p-4 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] md:mt-0 mt-8 border border-brand-danger/10"
+          className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-brand-danger/20 text-brand-danger bg-white rounded-2xl hover:bg-brand-danger hover:border-brand-danger hover:text-white transition-all font-bold shadow-sm group active:scale-[0.98]"
         >
-          <div className="w-12 h-12 bg-brand-danger/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-            <LogOut size={22} className="text-brand-danger" />
-          </div>
-          <div>
-            <h3 className="font-bold text-brand-danger">Logout</h3>
-            <p className="text-xs text-brand-text-muted">Sign out of your account</p>
-          </div>
-        </div>
+          <LogOut size={20} className="text-brand-danger group-hover:text-white transition-colors" />
+          <span className="tracking-wide">Log Out</span>
+        </button>
       </div>
 
       {/* Logout Confirmation Modal */}
