@@ -14,7 +14,7 @@ export default function About() {
       </div>
 
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-4 overflow-hidden p-2">
+        <div className="w-24 h-24 flex items-center justify-center mb-2 overflow-hidden">
           <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain mix-blend-multiply" />
         </div>
         <h2 className="font-serif tracking-tight text-2xl font-bold text-brand-text">Fasal-Drishti</h2>
