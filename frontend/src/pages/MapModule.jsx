@@ -387,9 +387,47 @@ export default function MapModule() {
   const confidence = Math.min(99, farmScore + 8);
 
   return (
-    <div className="pt-6 px-5 lg:px-8 pb-24 md:pb-8 flex flex-col lg:flex-row flex-1 overflow-hidden h-full gap-6">
-      {/* Map Side (Left on Desktop, Top on Mobile) */}
-      <div className="relative w-full lg:w-2/3 h-[50vh] lg:h-full rounded-3xl overflow-hidden shadow-sm flex-shrink-0 bg-brand-bg">
+    <div className="pt-6 px-5 lg:px-8 pb-24 md:pb-8 flex flex-col flex-1 h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 flex-shrink-0">
+        <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
+          <ChevronLeft size={20} />
+        </button>
+        <div className="text-center flex flex-col items-center">
+          {farms.length > 0 ? (
+            <div className="relative inline-block">
+              <select 
+                value={activeFarm?.id || ""}
+                onChange={(e) => {
+                  const selected = farms.find(f => f.id === e.target.value);
+                  if (selected) {
+                    setActiveFarmId(selected.id);
+                  }
+                }}
+                className="text-lg font-bold text-brand-text bg-transparent outline-none appearance-none cursor-pointer pr-4 text-center"
+                style={{ textAlignLast: 'center' }}
+              >
+                {farms.map(f => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-brand-text-muted">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+          ) : (
+            <h1 className="font-serif tracking-tight text-lg font-bold text-brand-text">{activeFarm?.name || "No Farm"}</h1>
+          )}
+          {activeFarm && <p className="text-brand-text-muted text-xs">{activeFarm.area_acres} Acre • {activeFarm.crop}</p>}
+        </div>
+        <button onClick={handleDeleteFarm} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-danger hover:shadow-md transition-all">
+          <Trash2 size={20} />
+        </button>
+      </div>
+
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden h-full gap-6">
+        {/* Map Side (Left on Desktop, Top on Mobile) */}
+        <div className="relative w-full lg:w-2/3 h-[40vh] lg:h-full rounded-3xl overflow-hidden shadow-sm flex-shrink-0 bg-brand-bg">
         {loadingSatellite && (
           <div className="absolute inset-0 z-[3000] bg-brand-bg/80 backdrop-blur-sm flex flex-col items-center justify-center">
             <div className="bg-white rounded-2xl px-6 py-4 shadow-lg flex items-center gap-3">
@@ -522,42 +560,6 @@ export default function MapModule() {
 
       {/* Information Drawer / Right Panel on Desktop, Bottom on Mobile */}
       <div className="lg:w-1/3 flex flex-col overflow-y-auto h-full pb-4 pr-1">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
-          <ChevronLeft size={20} />
-        </button>
-        <div className="text-center flex flex-col items-center">
-          {farms.length > 0 ? (
-            <div className="relative inline-block">
-              <select 
-                value={activeFarm?.id || ""}
-                onChange={(e) => {
-                  const selected = farms.find(f => f.id === e.target.value);
-                  if (selected) {
-                    setActiveFarmId(selected.id);
-                  }
-                }}
-                className="text-lg font-bold text-brand-text bg-transparent outline-none appearance-none cursor-pointer pr-4 text-center"
-                style={{ textAlignLast: 'center' }}
-              >
-                {farms.map(f => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-brand-text-muted">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </div>
-            </div>
-          ) : (
-            <h1 className="font-serif tracking-tight text-lg font-bold text-brand-text">{activeFarm?.name || "No Farm"}</h1>
-          )}
-          {activeFarm && <p className="text-brand-text-muted text-xs">{activeFarm.area_acres} Acre • {activeFarm.crop}</p>}
-        </div>
-        <button onClick={handleDeleteFarm} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-danger hover:shadow-md transition-all">
-          <Trash2 size={20} />
-        </button>
-      </div>
 
       {/* Location Permission Prompt */}
       {locationDenied && (
@@ -755,6 +757,7 @@ export default function MapModule() {
           </button>
         </div>
       )}
+      </div>
       </div>
     </div>
   );
