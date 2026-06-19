@@ -103,10 +103,14 @@ export default function MapModule() {
 
     // Register with AgroMonitoring API
     let polygonId = null;
+    const existingCropFarms = farms.filter(f => f.crop === newFarmCrop).length;
+    const suffix = existingCropFarms > 0 ? ` ${existingCropFarms + 1}` : '';
+    const farmName = `${newFarmCrop} Farm${suffix}`;
+
     try {
       const geoJsonCoords = [...newPolygonCoords.map(c => [c[1], c[0]]), [newPolygonCoords[0][1], newPolygonCoords[0][0]]];
       const geoJson = {
-        name: `Farm ${String.fromCharCode(65 + farms.length)}`,
+        name: farmName,
         geo_json: {
           type: "Feature",
           properties: {},
@@ -150,7 +154,7 @@ export default function MapModule() {
 
       const newFarm = {
         id: Date.now().toString(),
-        name: `Farm ${String.fromCharCode(65 + farms.length)}`,
+        name: farmName,
         crop: newFarmCrop,
         area_acres: farmArea || calculatedAreaAcres,
         coordinates: newPolygonCoords,
