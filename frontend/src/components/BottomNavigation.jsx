@@ -28,7 +28,7 @@ const BottomNavigation = () => {
 
   return (
     <div
-      className="fixed md:absolute bottom-0 left-0 right-0 w-full md:w-64 md:h-screen md:top-0 md:left-0 bg-white/95 backdrop-blur-md border-t md:border-t-0 md:border-r border-brand-text/10 z-[5000] safe-area-bottom md:pb-0"
+      className="fixed bottom-0 left-0 right-0 w-full md:w-64 md:h-screen md:top-0 md:left-0 bg-white/95 backdrop-blur-md border-t md:border-t-0 md:border-r border-brand-text/10 z-[5000] safe-area-bottom md:pb-0"
       style={{ paddingBottom: 'calc(0.5rem + env(safe-area-bottom))' }}
     >
       <div className="flex justify-between items-center px-3 py-1.5 md:flex-col md:justify-start md:items-stretch md:px-4 md:py-8 md:gap-2 md:h-full">

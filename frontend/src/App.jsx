@@ -27,11 +27,14 @@ function AppLayout() {
   const noLayout = isAuthScreen || isScanner;
 
   return (
-    <div className={`max-w-7xl mx-auto w-full min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg flex flex-col ${!noLayout ? 'pt-14 md:pl-64' : ''}`}>
+    <div className={`w-full min-h-screen relative bg-brand-bg flex flex-col ${!noLayout ? 'pt-14 md:pl-64' : ''}`}>
       {!noLayout && <Navbar />}
       <BottomNavigation />
-      <Routes>
-        <Route path="/" element={<Navigate to="/splash" replace />} />
+      
+      {/* Centered Content Wrapper for Large Screens */}
+      <div className={`flex flex-col flex-1 w-full ${!noLayout ? 'max-w-7xl mx-auto' : ''}`}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/splash" replace />} />
         <Route path="/splash" element={<Splash />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile-setup" element={<ProfileSetup />} />
@@ -47,6 +50,7 @@ function AppLayout() {
         <Route path="/scanner" element={<LiveARScannerView />} />
         <Route path="*" element={<Navigate to="/splash" replace />} />
       </Routes>
+      </div>
     </div>
   );
 }
