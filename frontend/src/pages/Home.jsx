@@ -99,18 +99,18 @@ const Home = () => {
   });
 
   return (
-    <div className="pt-6 px-5 pb-6 h-full overflow-y-auto">
+    <div className="pt-6 px-5 md:px-8 pb-6 h-full overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Sprout size={20} className="text-brand-green" strokeWidth={1.5} />
-            <h1 className="font-serif tracking-tight text-[22px] font-bold text-brand-text truncate max-w-[200px]">
+            <Sprout size={20} className="text-brand-green md:w-8 md:h-8" strokeWidth={1.5} />
+            <h1 className="font-serif tracking-tight text-[22px] md:text-4xl lg:text-5xl font-bold text-brand-text truncate max-w-[200px] md:max-w-none">
               Hello, {userName ? userName : 'Farmer'}
             </h1>
           </div>
-          <div className="flex items-center gap-1.5 text-brand-text-muted text-sm">
-            <MapPin size={13} />
+          <div className="flex items-center gap-1.5 text-brand-text-muted text-sm md:text-base">
+            <MapPin size={13} className="md:w-4 md:h-4" />
             <span>{userLocation || 'Detecting location...'}</span>
           </div>
         </div>
@@ -188,7 +188,7 @@ const Home = () => {
         </button>
       </div>
 
-      <div className="flex flex-col gap-5 pb-28">
+      <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 pb-28 md:pb-8">
         {displayFarms.length === 0 ? (
           <EmptyState
             icon={Plus}

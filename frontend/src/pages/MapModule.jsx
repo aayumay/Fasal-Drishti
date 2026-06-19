@@ -387,9 +387,9 @@ export default function MapModule() {
   const confidence = Math.min(99, farmScore + 8);
 
   return (
-    <div className="pt-6 px-5 pb-24 flex flex-col flex-1 overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+    <div className="pt-6 px-5 lg:px-8 pb-24 md:pb-8 flex flex-col lg:flex-row flex-1 overflow-hidden h-full gap-6">
+      {/* Map Container (Left Side on Desktop) */}
+      <div className="relative w-full lg:w-2/3 h-[50vh] lg:h-full rounded-3xl overflow-hidden shadow-sm flex-shrink-0 bg-brand-bg order-2 lg:order-1">
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ChevronLeft size={20} />
         </button>
@@ -425,39 +425,6 @@ export default function MapModule() {
         </button>
       </div>
 
-      {/* Location Permission Prompt */}
-      {locationDenied && (
-        <div className="mb-4 card p-4 border-l-4 border-l-brand-accent animate-fade-in">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin size={15} className="text-brand-accent" />
-                <h4 className="text-sm font-bold text-brand-text">Location Access</h4>
-              </div>
-              <p className="text-xs text-brand-text-muted leading-relaxed mb-3">
-                Enable location to center the map on your current position.
-              </p>
-              <button
-                onClick={() => requestLocation(false)}
-                className="bg-brand-accent text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-brand-accent-hover transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-            <button onClick={() => setLocationDenied(false)} className="text-brand-text-muted hover:text-brand-text p-1">
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Top Actions for Drawing */}
-      {isDrawingMode && (
-        <div className="flex flex-col gap-2 mb-4 animate-fade-in">
-          {!newPolygonCoords ? (
-            <div className="card flex justify-between items-center px-4 py-3">
-              <span className="font-medium text-brand-text-muted text-sm">Tap map to draw corners ({tempCoords.length})</span>
-              <div className="flex gap-2">
                 <button onClick={() => { setTempCoords([]); setFarmArea(0); }} className="btn-sm">Clear</button>
                 <button
                   onClick={() => {
@@ -501,8 +468,54 @@ export default function MapModule() {
         </div>
       )}
 
-      {/* Map Container */}
-      <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-sm mb-5 bg-brand-bg">
+        {/* Location Permission Prompt */}
+        {locationDenied && (
+          <div className="mb-4 card p-4 border-l-4 border-l-brand-accent animate-fade-in flex-shrink-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <MapPin size={15} className="text-brand-accent" />
+                  <h4 className="text-sm font-bold text-brand-text">Location Access</h4>
+                </div>
+                <p className="text-xs text-brand-text-muted leading-relaxed mb-3">
+                  Enable location to center the map on your current position.
+                </p>
+                <button
+                  onClick={() => requestLocation(false)}
+                  className="bg-brand-accent text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-brand-accent-hover transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+              <button onClick={() => setLocationDenied(false)} className="text-brand-text-muted hover:text-brand-text p-1">
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Editing Warning Banner */}
+        {!isDrawingMode && activeFarm && !activeFarm.polygonId && (
+          <div className="mb-4 card p-4 border border-orange-400/20 bg-orange-50 animate-pulse-soft flex-shrink-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle size={15} className="text-orange-500" />
+                  <h4 className="text-sm font-bold text-orange-700">Action Required</h4>
+                </div>
+                <p className="text-xs text-orange-600/80 leading-relaxed mb-3">
+                  This field has no boundaries drawn. Please draw the field boundaries to enable satellite monitoring.
+                </p>
+                <button 
+                  onClick={() => setIsDrawingMode(true)}
+                  className="bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors"
+                >
+                  Draw Boundary Now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {loadingSatellite && (
           <div className="absolute inset-0 z-[3000] bg-brand-bg/80 backdrop-blur-sm flex flex-col items-center justify-center">
             <div className="bg-white rounded-2xl px-6 py-4 shadow-lg flex items-center gap-3">
@@ -624,7 +637,8 @@ export default function MapModule() {
             <span className="text-sm font-semibold text-brand-text-muted">Awaiting GPS Lock...</span>
           </div>
         )}
-
+        
+        {/* Map Legend */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] flex gap-2 bg-white/95 px-4 py-2.5 rounded-2xl shadow-sm text-[10px] font-semibold w-[90%] max-w-[320px] justify-between text-brand-text backdrop-blur-sm">
           <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-brand-green"></div> Healthy</span>
           <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-brand-accent"></div> Watch</span>
@@ -632,6 +646,45 @@ export default function MapModule() {
           <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-brand-danger"></div> Critical</span>
         </div>
       </div>
+
+      {/* Information Drawer / Right Panel on Desktop */}
+      <div className="lg:w-1/3 flex flex-col overflow-y-auto order-1 lg:order-2 h-full pb-4 pr-1">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5 flex-shrink-0">
+          <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
+            <ChevronLeft size={20} />
+          </button>
+          <div className="text-center flex flex-col items-center">
+            {farms.length > 0 ? (
+              <div className="relative inline-block">
+                <select 
+                  value={activeFarm?.id || ""}
+                  onChange={(e) => {
+                    const selected = farms.find(f => f.id === e.target.value);
+                    if (selected) {
+                      setActiveFarmId(selected.id);
+                    }
+                  }}
+                  className="text-lg font-bold text-brand-text bg-transparent outline-none appearance-none cursor-pointer pr-4 text-center"
+                  style={{ textAlignLast: 'center' }}
+                >
+                  {farms.map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-brand-text-muted">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            ) : (
+              <h1 className="font-serif tracking-tight text-lg font-bold text-brand-text">{activeFarm?.name || "No Farm"}</h1>
+            )}
+            {activeFarm && <p className="text-brand-text-muted text-xs">{activeFarm.area_acres} Acre • {activeFarm.crop}</p>}
+          </div>
+          <button onClick={handleDeleteFarm} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-danger hover:shadow-md transition-all">
+            <Trash2 size={20} />
+          </button>
+        </div>
 
       {activeFarm ? (
         <>
@@ -753,6 +806,7 @@ export default function MapModule() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
