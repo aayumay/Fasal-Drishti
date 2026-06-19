@@ -388,8 +388,8 @@ export default function MapModule() {
 
   return (
     <div className="pt-6 px-5 lg:px-8 pb-24 md:pb-8 flex flex-col lg:flex-row flex-1 overflow-hidden h-full gap-6">
-      {/* Map Container */}
-      <div className="relative w-full lg:w-2/3 h-[50vh] lg:h-full rounded-3xl overflow-hidden shadow-sm flex-shrink-0 bg-brand-bg order-2 lg:order-1">
+      {/* Map Side (Left on Desktop, Top on Mobile) */}
+      <div className="relative w-full lg:w-2/3 h-[50vh] lg:h-full rounded-3xl overflow-hidden shadow-sm flex-shrink-0 bg-brand-bg">
         {loadingSatellite && (
           <div className="absolute inset-0 z-[3000] bg-brand-bg/80 backdrop-blur-sm flex flex-col items-center justify-center">
             <div className="bg-white rounded-2xl px-6 py-4 shadow-lg flex items-center gap-3">
@@ -520,8 +520,8 @@ export default function MapModule() {
         </div>
       </div>
 
-      {/* Information Drawer / Right Panel on Desktop */}
-      <div className="lg:w-1/3 flex flex-col overflow-y-auto order-1 lg:order-2 h-full pb-4 pr-1">
+      {/* Information Drawer / Right Panel on Desktop, Bottom on Mobile */}
+      <div className="lg:w-1/3 flex flex-col overflow-y-auto h-full pb-4 pr-1">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
