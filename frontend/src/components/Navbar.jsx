@@ -6,8 +6,8 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed top-0 left-0 md:left-64 right-0 z-[5000] px-4 py-3 bg-brand-bg/90 backdrop-blur-md border-b border-brand-text/5 shadow-sm">
-      <div className="max-w-md md:max-w-7xl mx-auto flex justify-between items-center">
+    <nav className="fixed md:absolute top-0 left-0 md:left-64 right-0 z-[5000] px-4 py-3 bg-brand-bg/90 backdrop-blur-md border-b border-brand-text/5 shadow-sm">
+      <div className="w-full flex justify-between md:justify-end items-center">
         <div className="flex items-center gap-2 md:hidden">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
             <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain" />

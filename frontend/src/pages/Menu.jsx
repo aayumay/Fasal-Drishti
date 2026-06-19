@@ -22,7 +22,7 @@ export default function Menu() {
         <h1 className="font-serif tracking-tight text-xl font-bold text-brand-text">Menu</h1>
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-3">
         <MenuItem icon={User} iconBg="bg-brand-green/10" iconColor="text-brand-green" title="My Profile" subtitle="Edit personal information" onClick={() => navigate('/profile-setup')} />
         <MenuItem icon={SettingsIcon} iconBg="bg-blue-500/10" iconColor="text-blue-500" title="Settings" subtitle="App preferences and units" onClick={() => navigate('/settings')} />
         <MenuItem icon={HelpCircle} iconBg="bg-brand-accent/10" iconColor="text-brand-accent" title="Help & Support" subtitle="Contact our agronomy team" onClick={() => navigate('/help')} />
@@ -30,7 +30,7 @@ export default function Menu() {
 
         <div
           onClick={handleLogout}
-          className="card flex items-center gap-4 p-4 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] mt-8 border border-brand-danger/10"
+          className="card flex items-center gap-4 p-4 cursor-pointer hover:shadow-md transition-all active:scale-[0.98] md:mt-0 mt-8 border border-brand-danger/10"
         >
           <div className="w-12 h-12 bg-brand-danger/10 rounded-2xl flex items-center justify-center flex-shrink-0">
             <LogOut size={22} className="text-brand-danger" />

@@ -28,8 +28,8 @@ const BottomNavigation = () => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 w-full md:w-64 md:h-screen md:top-0 md:left-0 bg-white/95 backdrop-blur-md border-t md:border-t-0 md:border-r border-brand-text/10 z-[5000] safe-area-bottom md:pb-0"
-      style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
+      className="fixed md:absolute bottom-0 left-0 right-0 w-full md:w-64 md:h-screen md:top-0 md:left-0 bg-white/95 backdrop-blur-md border-t md:border-t-0 md:border-r border-brand-text/10 z-[5000] safe-area-bottom md:pb-0"
+      style={{ paddingBottom: 'calc(0.5rem + env(safe-area-bottom))' }}
     >
       <div className="flex justify-between items-center px-3 py-1.5 md:flex-col md:justify-start md:items-stretch md:px-4 md:py-8 md:gap-2 md:h-full">
         {/* Desktop Logo in Sidebar */}
@@ -54,8 +54,8 @@ const BottomNavigation = () => {
               {isActive && (
                 <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-6 h-0.5 md:w-1 md:h-6 md:top-1/2 md:-translate-y-1/2 md:left-0 md:-translate-x-0 bg-brand-accent rounded-full" />
               )}
-              <Icon size={21} strokeWidth={isActive ? 2.5 : 1.8} className="md:w-5 md:h-5" />
-              <span className="text-[9px] md:text-sm font-semibold tracking-wide uppercase md:capitalize md:tracking-normal">
+              <Icon size={21} strokeWidth={isActive ? 2.5 : 1.8} className="md:w-5 md:h-5 flex-shrink-0" />
+              <span className="text-[9px] md:text-sm font-semibold tracking-wide uppercase md:capitalize md:tracking-normal whitespace-nowrap">
                 {item.label}
               </span>
             </button>
