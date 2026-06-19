@@ -12,8 +12,8 @@ const Splash = () => {
 
       {/* Top Section */}
       <div className="relative z-10 pt-20 px-8 flex flex-col items-center text-center">
-        <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-6 rotate-3 hover:rotate-0 transition-transform duration-500">
-          <Sprout size={48} className="text-brand-green" strokeWidth={1.5} />
+        <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-6 hover:scale-105 transition-transform duration-500 overflow-hidden p-2">
+          <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain mix-blend-multiply" />
         </div>
         <h1 className="font-serif tracking-tight text-4xl font-bold tracking-tight text-brand-text">
           Fasal-Drishti

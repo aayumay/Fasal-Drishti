@@ -14,8 +14,8 @@ export default function About() {
       </div>
 
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-4">
-          <Sprout size={40} className="text-brand-green" strokeWidth={1.5} />
+        <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-4 overflow-hidden p-2">
+          <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain mix-blend-multiply" />
         </div>
         <h2 className="font-serif tracking-tight text-2xl font-bold text-brand-text">Fasal-Drishti</h2>
         <p className="text-sm text-brand-text-muted mt-1">v1.0.0 (Hackathon Edition)</p>

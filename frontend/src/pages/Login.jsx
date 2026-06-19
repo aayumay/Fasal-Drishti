@@ -67,8 +67,8 @@ export default function Login() {
       <div id="recaptcha-container" />
       <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
         <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 rotate-3">
-            <Sprout size={40} className="text-brand-green" strokeWidth={1.5} />
+          <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 overflow-hidden p-2">
+            <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain mix-blend-multiply" />
           </div>
           <h1 className="font-serif tracking-tight text-3xl font-bold text-brand-text mb-2">Welcome Back</h1>
           <p className="text-brand-text-muted text-sm">Login with your phone number</p>
