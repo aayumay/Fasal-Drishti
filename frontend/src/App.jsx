@@ -27,7 +27,7 @@ function AppLayout() {
   const noLayout = isAuthScreen || isScanner;
 
   return (
-    <div className={`w-full min-h-screen relative bg-brand-bg flex flex-col ${!noLayout ? 'pt-14 md:pl-64' : ''}`}>
+    <div className={`w-full h-screen overflow-hidden relative bg-brand-bg flex flex-col ${!noLayout ? 'pt-14 md:pl-64' : ''}`}>
       {!noLayout && <Navbar />}
       <BottomNavigation />
       
