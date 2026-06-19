@@ -78,21 +78,12 @@ const Home = () => {
   const displayFarms = myFarms.map(f => {
     let score = f.healthScore !== undefined && f.healthScore !== null ? f.healthScore : undefined;
     
-    // Fallback for farms stuck in evaluating state (due to API processing delays)
-    if (score === undefined) {
-      const stableRandom = parseInt((f.id || '0').slice(-4), 16) || 85;
-      score = 65 + (stableRandom % 30); // Stable mock score between 65 and 94
-    }
-    
     let color = 'bg-brand-text/50';
     if (score !== undefined) {
       if (score > 80) color = 'bg-brand-green';
       else if (score >= 50) color = 'bg-orange-400';
       else color = 'bg-brand-danger';
     }
-
-    // Stable mock yield if missing
-    const mockYield = f.id ? `${(2 + (parseInt(f.id.slice(-2), 16) % 3)).toFixed(1)} Tons/Acre` : '2.4 Tons/Acre';
 
     return {
       id: f.id,
@@ -101,8 +92,8 @@ const Home = () => {
       crop: f.crop || 'Unknown',
       scoreDisplay: score !== undefined ? `${score}%` : 'Evaluating...',
       location: f.locationName || f.location || 'Unknown Location',
-      yield: f.yield || mockYield,
-      status: score > 80 ? 'Healthy' : score >= 50 ? 'Watch' : 'High Risk',
+      yield: f.yield || 'Evaluating...',
+      status: score !== undefined ? (score > 80 ? 'Healthy' : score >= 50 ? 'Watch' : 'High Risk') : 'Pending',
       color: color
     };
   });

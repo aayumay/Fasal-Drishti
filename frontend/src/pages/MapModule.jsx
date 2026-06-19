@@ -152,13 +152,6 @@ export default function MapModule() {
         }
       }
 
-      // Fallback if real NDVI score couldn't be fetched or processed yet
-      if (healthScore === null) {
-        healthScore = Math.floor(Math.random() * 30) + 65; // 65 to 94
-      }
-
-      const mockYield = `${(Math.random() * 2 + 1.5).toFixed(1)} Tons/Acre`;
-
       const newFarm = {
         id: Date.now().toString(),
         name: farmName,
@@ -168,7 +161,6 @@ export default function MapModule() {
         locationName,
         polygonId,
         healthScore,
-        yield: mockYield,
         status: 'Active'
       };
       
@@ -212,12 +204,21 @@ export default function MapModule() {
   const fetchSatelliteData = async (polyid, currentFarm) => {
     const applyFallback = () => {
       setSatelliteData(null);
-      setHealthyPct(81);
-      setWatchPct(12);
-      setHighRiskPct(5);
-      setCriticalPct(2);
-      setFarmScore(81);
-      if (currentFarm?.id && currentFarm.healthScore !== 81) updateFarmHealth(currentFarm.id, 81);
+      const fs = currentFarm?.healthScore !== undefined && currentFarm?.healthScore !== null ? currentFarm.healthScore : null;
+      if (fs !== null) {
+        setFarmScore(fs);
+        setHealthyPct(fs);
+        const rem = 100 - fs;
+        setWatchPct(Math.floor(rem * 0.5));
+        setHighRiskPct(Math.floor(rem * 0.3));
+        setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
+      } else {
+        setFarmScore(null);
+        setHealthyPct(0);
+        setWatchPct(0);
+        setHighRiskPct(0);
+        setCriticalPct(0);
+      }
     };
 
     try {
@@ -285,13 +286,21 @@ export default function MapModule() {
       if (activeFarm.polygonId) {
         fetchSatelliteData(activeFarm.polygonId, activeFarm);
       } else {
-        const fs = activeFarm.healthScore || 81;
-        setFarmScore(fs);
-        setHealthyPct(fs);
-        const rem = 100 - fs;
-        setWatchPct(Math.floor(rem * 0.5));
-        setHighRiskPct(Math.floor(rem * 0.3));
-        setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
+        const fs = activeFarm.healthScore !== undefined && activeFarm.healthScore !== null ? activeFarm.healthScore : null;
+        if (fs !== null) {
+          setFarmScore(fs);
+          setHealthyPct(fs);
+          const rem = 100 - fs;
+          setWatchPct(Math.floor(rem * 0.5));
+          setHighRiskPct(Math.floor(rem * 0.3));
+          setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
+        } else {
+          setFarmScore(null);
+          setHealthyPct(0);
+          setWatchPct(0);
+          setHighRiskPct(0);
+          setCriticalPct(0);
+        }
       }
     }
   }, [activeFarm?.id]);
