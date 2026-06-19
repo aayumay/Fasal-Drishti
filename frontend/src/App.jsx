@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { FarmProvider } from './context/FarmContext';
 import { UserProvider } from './context/UserContext';
@@ -18,33 +18,46 @@ import About from './pages/About';
 import BottomNavigation from './components/BottomNavigation';
 import LiveARScannerView from './pages/LiveARScannerView';
 
+function AppLayout() {
+  const location = useLocation();
+  const isAuthScreen = ['/splash', '/login', '/profile-setup'].includes(location.pathname);
+  const isScanner = location.pathname === '/scanner';
+  
+  // Do not apply layout padding or navbar to auth screens or full-screen scanner
+  const noLayout = isAuthScreen || isScanner;
+
+  return (
+    <div className={`max-w-7xl mx-auto w-full min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg flex flex-col ${!noLayout ? 'pt-14 md:pl-64' : ''}`}>
+      {!noLayout && <Navbar />}
+      <BottomNavigation />
+      <Routes>
+        <Route path="/" element={<Navigate to="/splash" replace />} />
+        <Route path="/splash" element={<Splash />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile-setup" element={<ProfileSetup />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/map" element={<MapModule />} />
+        <Route path="/diagnose" element={<Diagnose />} />
+        <Route path="/action-plan" element={<ActionPlan />} />
+        <Route path="/alerts" element={<Alerts />} />
+        <Route path="/menu" element={<Menu />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/scanner" element={<LiveARScannerView />} />
+        <Route path="*" element={<Navigate to="/splash" replace />} />
+      </Routes>
+    </div>
+  );
+}
+
 function App() {
   return (
     <LanguageProvider>
       <UserProvider>
         <FarmProvider>
           <Router>
-            <div className="max-w-7xl mx-auto w-full min-h-screen relative shadow-2xl overflow-hidden bg-brand-bg pt-14 md:pl-64 flex flex-col">
-              <Navbar />
-              <BottomNavigation />
-              <Routes>
-                <Route path="/" element={<Navigate to="/splash" replace />} />
-                <Route path="/splash" element={<Splash />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/profile-setup" element={<ProfileSetup />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/map" element={<MapModule />} />
-                <Route path="/diagnose" element={<Diagnose />} />
-                <Route path="/action-plan" element={<ActionPlan />} />
-                <Route path="/alerts" element={<Alerts />} />
-                <Route path="/menu" element={<Menu />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/scanner" element={<LiveARScannerView />} />
-                <Route path="*" element={<Navigate to="/splash" replace />} />
-              </Routes>
-            </div>
+            <AppLayout />
           </Router>
         </FarmProvider>
       </UserProvider>
