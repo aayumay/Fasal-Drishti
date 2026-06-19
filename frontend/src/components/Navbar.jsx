@@ -10,7 +10,7 @@ export default function Navbar() {
       <div className="max-w-md mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-            <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain mix-blend-multiply" />
+            <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-serif font-bold text-lg text-brand-green tracking-wide">Fasal-Drishti</span>
         </div>
