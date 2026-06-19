@@ -105,7 +105,7 @@ const Home = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Sprout size={20} className="text-brand-green" strokeWidth={1.5} />
-            <h1 className="text-[22px] font-bold text-brand-text truncate max-w-[200px]">
+            <h1 className="font-serif tracking-tight text-[22px] font-bold text-brand-text truncate max-w-[200px]">
               Hello, {userName ? userName : 'Farmer'}
             </h1>
           </div>

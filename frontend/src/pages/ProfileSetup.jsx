@@ -40,7 +40,7 @@ export default function ProfileSetup() {
         <ArrowLeft size={20} />
       </button>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-brand-text mb-2">Create Profile</h1>
+        <h1 className="font-serif tracking-tight text-3xl font-bold text-brand-text mb-2">Create Profile</h1>
         <p className="text-brand-text-muted text-sm leading-relaxed">Tell us about yourself and your farm to get personalized insights.</p>
       </div>
       <form onSubmit={handleSaveProfile} className="space-y-5 flex-1 flex flex-col">

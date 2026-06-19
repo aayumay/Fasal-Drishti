@@ -10,14 +10,14 @@ export default function About() {
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-brand-text">About Fasal-Drishti</h1>
+        <h1 className="font-serif tracking-tight text-xl font-bold text-brand-text">About Fasal-Drishti</h1>
       </div>
 
       <div className="flex flex-col items-center text-center mb-8">
         <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-4">
           <Sprout size={40} className="text-brand-green" strokeWidth={1.5} />
         </div>
-        <h2 className="text-2xl font-bold text-brand-text">Fasal-Drishti</h2>
+        <h2 className="font-serif tracking-tight text-2xl font-bold text-brand-text">Fasal-Drishti</h2>
         <p className="text-sm text-brand-text-muted mt-1">v1.0.0 (Hackathon Edition)</p>
       </div>
 

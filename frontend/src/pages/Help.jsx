@@ -10,7 +10,7 @@ export default function Help() {
         <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-brand-text">Help & Support</h1>
+        <h1 className="font-serif tracking-tight text-xl font-bold text-brand-text">Help & Support</h1>
       </div>
 
 

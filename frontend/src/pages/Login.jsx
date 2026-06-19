@@ -70,7 +70,7 @@ export default function Login() {
           <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 rotate-3">
             <Sprout size={40} className="text-brand-green" strokeWidth={1.5} />
           </div>
-          <h1 className="text-3xl font-bold text-brand-text mb-2">Welcome Back</h1>
+          <h1 className="font-serif tracking-tight text-3xl font-bold text-brand-text mb-2">Welcome Back</h1>
           <p className="text-brand-text-muted text-sm">Login with your phone number</p>
         </div>
 

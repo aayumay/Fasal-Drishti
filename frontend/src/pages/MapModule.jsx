@@ -416,7 +416,7 @@ export default function MapModule() {
               </div>
             </div>
           ) : (
-            <h1 className="text-lg font-bold text-brand-text">{activeFarm?.name || "No Farm"}</h1>
+            <h1 className="font-serif tracking-tight text-lg font-bold text-brand-text">{activeFarm?.name || "No Farm"}</h1>
           )}
           {activeFarm && <p className="text-brand-text-muted text-xs">{activeFarm.area_acres} Acre • {activeFarm.crop}</p>}
         </div>

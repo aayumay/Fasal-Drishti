@@ -48,7 +48,7 @@ export default function VendorDrawer({ isOpen, onClose }) {
         <div className="p-5">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-xl font-bold text-emerald-400">Procure Treatment</h2>
+              <h2 className="font-serif tracking-tight text-xl font-bold text-emerald-400">Procure Treatment</h2>
               <p className="text-xs text-slate-400 mt-1">Recommended agro-dealers for your diagnosis.</p>
             </div>
             <button 

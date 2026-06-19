@@ -15,7 +15,7 @@ const Splash = () => {
         <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-6 rotate-3 hover:rotate-0 transition-transform duration-500">
           <Sprout size={48} className="text-brand-green" strokeWidth={1.5} />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight text-brand-text">
+        <h1 className="font-serif tracking-tight text-4xl font-bold tracking-tight text-brand-text">
           Fasal-Drishti
         </h1>
         <p className="text-brand-text-muted text-sm mt-2 font-medium tracking-wide">
@@ -25,7 +25,7 @@ const Splash = () => {
 
       {/* Middle Section */}
       <div className="relative z-10 flex flex-col items-start px-8 mb-8">
-        <h2 className="text-[2.8rem] font-bold leading-[1.1] text-brand-text mb-4">
+        <h2 className="font-serif tracking-tight text-[2.8rem] font-bold leading-[1.1] text-brand-text mb-4">
           Know Your<br />
           <span className="text-brand-accent">Fields Better.</span>
         </h2>

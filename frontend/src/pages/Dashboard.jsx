@@ -71,7 +71,7 @@ export default function Dashboard() {
       {/* Header with Location */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{t('welcome_back')}</h1>
+          <h1 className="font-serif tracking-tight text-2xl font-bold">{t('welcome_back')}</h1>
           <div className="flex items-center text-slate-400 text-sm mt-1.5 gap-1.5">
             <span className="font-medium text-emerald-400">{locationName}</span>
           </div>
@@ -79,7 +79,7 @@ export default function Dashboard() {
       </div>
 
       {/* Weather Metrics */}
-      <h2 className="text-lg font-semibold text-emerald-400 mb-2 flex items-center gap-2">
+      <h2 className="font-serif tracking-tight text-lg font-semibold text-emerald-400 mb-2 flex items-center gap-2">
         <Cloud size={20} /> {t('current_conditions')}
       </h2>
       
@@ -146,7 +146,7 @@ export default function Dashboard() {
 
       {/* Market Trends */}
       <div className="glass-panel p-6 mt-6">
-        <h2 className="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+        <h2 className="font-serif tracking-tight text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
           <TrendingUp size={20} /> {t('mandi_prices')}
         </h2>
         {isLoading ? (
