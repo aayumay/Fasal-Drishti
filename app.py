@@ -14,7 +14,7 @@ if "farm_id" not in st.session_state:
     st.session_state.farm_id = None
 
 with st.sidebar:
-    st.header("🔐 Farm Login")
+    st.header("Farm Login")
     if not st.session_state.farm_id:
         farm_input = st.text_input("Enter Farm ID (e.g. FARM-1)")
         if st.button("Login") and farm_input:
