@@ -28,12 +28,12 @@ export default function ProfileSetup() {
       if (user) {
         await setDoc(doc(db, 'farmers', user.uid), { ...formData, phone: user.phoneNumber, createdAt: new Date().toISOString() });
       }
-      saveUserName(formData.name);
-      navigate('/home');
-    } catch {
-      navigate('/home');
+    } catch (err) {
+      console.warn("Firebase save failed:", err);
     } finally {
+      saveUserName(formData.name || 'Farmer');
       setLoading(false);
+      navigate('/home');
     }
   };
 
