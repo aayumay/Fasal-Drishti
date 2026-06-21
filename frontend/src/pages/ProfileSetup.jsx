@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, User, MapPin, Map, Sprout, Combine, ArrowLeft, Loader2 } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { useUserContext } from '../context/UserContext';
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Gujarat', 'Haryana',
@@ -13,6 +14,7 @@ const INDIAN_STATES = [
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
+  const { saveUserName } = useUserContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', village: '', state: '', cropType: 'Soybean', farmSize: '' });
 
@@ -26,6 +28,7 @@ export default function ProfileSetup() {
       if (user) {
         await setDoc(doc(db, 'farmers', user.uid), { ...formData, phone: user.phoneNumber, createdAt: new Date().toISOString() });
       }
+      saveUserName(formData.name);
       navigate('/home');
     } catch {
       navigate('/home');
