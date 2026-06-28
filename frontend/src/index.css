@@ -1,118 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: #F5F0E8;
-  --color-brand-card: #FFFFFF;
-  --color-brand-card-light: #FAF7F2;
-  --color-brand-accent: #D4A373;
-  --color-brand-accent-hover: #C49263;
-  --color-brand-danger: #E07A5F;
-  --color-brand-danger-dark: #C96A50;
-  --color-brand-text: #2D2A24;
-  --color-brand-text-muted: #8B8580;
-  --color-brand-green: #5A7D5A;
-  --color-brand-green-light: #E8F0E8;
-  
-  --font-sans: 'Inter', 'system-ui', sans-serif;
-  --font-serif: 'Fraunces', 'Georgia', serif;
+  /* Dark Forest Green - Professional Ag Tech palette from reference */
+  --color-brand-bg: #1A1F16;
+  --color-brand-bg-2: #222820;
+  --color-brand-card: #252B21;
+  --color-brand-card-light: #2C3326;
+  --color-brand-card-border: rgba(255,255,255,0.07);
+
+  --color-brand-accent: #8DB87A;
+  --color-brand-accent-hover: #7AA668;
+  --color-brand-accent-muted: rgba(141,184,122,0.12);
+
+  --color-brand-green: #6BAE55;
+  --color-brand-green-light: rgba(107,174,85,0.15);
+  --color-brand-green-dark: #3D6B2E;
+
+  --color-brand-gold: #C9A84C;
+  --color-brand-gold-light: rgba(201,168,76,0.12);
+
+  --color-brand-danger: #E05C5C;
+  --color-brand-danger-dark: #C04848;
+
+  --color-brand-text: #EEF0E8;
+  --color-brand-text-muted: #8A9080;
+  --color-brand-text-subtle: #5A6050;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Fraunces', Georgia, serif;
 }
 
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
   body {
-    @apply bg-brand-bg text-brand-text antialiased min-h-screen selection:bg-brand-accent/30 selection:text-brand-text;
+    @apply bg-brand-bg text-brand-text antialiased min-h-screen;
+    font-family: 'Inter', system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   * {
-    @apply border-brand-text/5;
+    box-sizing: border-box;
   }
 }
 
 @layer components {
+
+  /* --- Core Cards --- */
   .glass-card {
-    @apply bg-brand-card rounded-2xl shadow-sm border border-brand-text/5 transition-all duration-200;
+    background: var(--color-brand-card);
+    border: 1px solid var(--color-brand-card-border);
+    @apply rounded-2xl transition-all duration-200;
   }
   .glass-card:hover {
-    @apply shadow-md;
+    border-color: rgba(141,184,122,0.15);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
   }
 
   .card {
-    @apply bg-white rounded-3xl shadow-sm border border-brand-text/5 transition-all duration-200;
+    background: var(--color-brand-card);
+    border: 1px solid var(--color-brand-card-border);
+    @apply rounded-3xl transition-all duration-200;
   }
   .card:hover {
-    @apply shadow-md;
+    border-color: rgba(141,184,122,0.18);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
   }
 
   .card-flat {
-    @apply bg-brand-card-light rounded-2xl border border-brand-text/5;
+    background: var(--color-brand-card-light);
+    border: 1px solid var(--color-brand-card-border);
+    @apply rounded-2xl;
   }
 
+  /* --- Buttons --- */
   .primary-btn {
-    @apply w-full py-4 bg-brand-accent hover:bg-brand-accent-hover text-white font-bold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-center flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100;
+    @apply w-full py-4 font-bold rounded-xl transition-all duration-200 shadow-sm active:scale-[0.98] text-center flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+    background: linear-gradient(135deg, #6BAE55 0%, #4D8A3A 100%);
+    color: #EEF0E8;
+    border: 1px solid rgba(107,174,85,0.3);
+    letter-spacing: 0.01em;
+  }
+  .primary-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7ABD64 0%, #5C9A49 100%);
+    box-shadow: 0 4px 20px rgba(107,174,85,0.25);
   }
 
   .btn-ghost {
-    @apply px-5 py-2.5 bg-white rounded-xl shadow-sm text-sm font-semibold text-brand-text hover:shadow-md transition-all duration-200 active:scale-[0.98];
+    @apply px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.98];
+    background: var(--color-brand-card-light);
+    border: 1px solid var(--color-brand-card-border);
+    color: var(--color-brand-text);
+  }
+  .btn-ghost:hover {
+    border-color: rgba(141,184,122,0.2);
+    background: var(--color-brand-card);
   }
 
   .btn-sm {
-    @apply px-3.5 py-2 bg-white rounded-xl shadow-sm text-xs font-semibold text-brand-text hover:shadow-md transition-all duration-200 active:scale-[0.98];
+    @apply px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-[0.98];
+    background: var(--color-brand-card-light);
+    border: 1px solid var(--color-brand-card-border);
+    color: var(--color-brand-text);
   }
 
+  /* --- Inputs --- */
   .input-field {
-    @apply w-full bg-white text-brand-text px-4 py-3.5 rounded-2xl border border-brand-text/10 focus:outline-none focus:border-brand-accent/50 transition-all duration-200 shadow-sm placeholder:text-brand-text-muted/50;
+    @apply w-full px-4 py-3.5 rounded-2xl transition-all duration-200 placeholder:text-brand-text-subtle;
+    background: var(--color-brand-card-light);
+    border: 1px solid var(--color-brand-card-border);
+    color: var(--color-brand-text);
+    outline: none;
+  }
+  .input-field:focus {
+    border-color: rgba(107,174,85,0.4);
+    box-shadow: 0 0 0 3px rgba(107,174,85,0.08);
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  /* --- Scrollbar --- */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 @layer utilities {
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out both;
-  }
+  .animate-fade-in { animation: fade-in 0.3s ease-out both; }
 
   @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .animate-fade-in-up {
-    animation: fade-in-up 0.4s ease-out both;
-  }
+  .animate-fade-in-up { animation: fade-in-up 0.4s ease-out both; }
 
   @keyframes pulse-soft {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50%       { opacity: 0.5; }
   }
-  .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
-  }
+  .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 
   @keyframes scale-in {
     from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    to   { opacity: 1; transform: scale(1); }
   }
-  .animate-scale-in {
-    animation: scale-in 0.2s ease-out both;
-  }
+  .animate-scale-in { animation: scale-in 0.2s ease-out both; }
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
   }
   .animate-shimmer {
-    background: linear-gradient(90deg, rgba(139,133,128,0.05) 25%, rgba(139,133,128,0.1) 50%, rgba(139,133,128,0.05) 75%);
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.03) 25%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(255,255,255,0.03) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }

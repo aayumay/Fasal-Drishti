@@ -63,19 +63,27 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col px-6 min-h-screen pt-20 pb-10 overflow-y-auto">
+    <div
+      className="flex flex-col px-6 min-h-screen pt-20 pb-10 overflow-y-auto"
+      style={{ background: 'linear-gradient(160deg, #1A1F16 0%, #1E2519 60%, #1A1F16 100%)' }}
+    >
       <div id="recaptcha-container" />
       <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
         <div className="text-center mb-10">
-          <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <img src="/fasal_logo.png" alt="Logo" className="w-full h-full object-contain" />
+          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-5 overflow-hidden rounded-2xl"
+            style={{ background: 'rgba(107,174,85,0.12)', border: '1px solid rgba(107,174,85,0.2)' }}
+          >
+            <img src="/fasal_logo.png" alt="Logo" className="w-14 h-14 object-contain" />
           </div>
-          <h1 className="font-serif tracking-tight text-3xl font-bold text-brand-text mb-2">Welcome Back</h1>
-          <p className="text-brand-text-muted text-sm">Login with your phone number</p>
+          <h1 className="font-serif tracking-tight text-3xl font-bold mb-2" style={{ color: '#EEF0E8' }}>Welcome Back</h1>
+          <p className="text-sm" style={{ color: '#8A9080' }}>Sign in to your farming dashboard</p>
         </div>
 
         {error && (
-          <div className="bg-brand-danger/5 border border-brand-danger/20 text-brand-danger text-sm p-3 rounded-xl mb-5 text-center animate-scale-in">
+          <div
+            className="text-sm p-3 rounded-xl mb-5 text-center animate-scale-in"
+            style={{ background: 'rgba(224,92,92,0.08)', border: '1px solid rgba(224,92,92,0.2)', color: '#E05C5C' }}
+          >
             {error}
           </div>
         )}
@@ -83,9 +91,9 @@ export default function Login() {
         {step === 'phone' ? (
           <form onSubmit={handleSendOtp} className="space-y-6">
             <div>
-              <label className="block text-brand-text-muted text-sm font-medium mb-2">Phone Number</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#8A9080' }}>Phone Number</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted font-medium">+91</span>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold" style={{ color: '#8DB87A' }}>+91</span>
                 <input
                   type="tel"
                   className="input-field pl-12"
@@ -95,8 +103,11 @@ export default function Login() {
                   required
                 />
               </div>
-              <p className="text-[10px] text-brand-text-muted mt-2 text-center bg-brand-bg py-1.5 rounded-lg border border-brand-green/20">
-                <span className="font-bold text-brand-green">Demo Hint:</span> Enter <span className="font-mono">99999 99999</span> to test
+              <p
+                className="text-[10px] mt-2 text-center py-1.5 rounded-lg"
+                style={{ background: 'rgba(107,174,85,0.08)', border: '1px solid rgba(107,174,85,0.15)', color: '#8A9080' }}
+              >
+                <span className="font-bold" style={{ color: '#8DB87A' }}>Demo Hint:</span> Enter <span className="font-mono">99999 99999</span> to test
               </p>
             </div>
             <button type="submit" disabled={loading} className="primary-btn">
@@ -106,9 +117,9 @@ export default function Login() {
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-6 animate-fade-in">
             <div>
-              <label className="block text-brand-text-muted text-sm font-medium mb-2">Enter 6-digit OTP</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#8A9080' }}>Enter 6-digit OTP</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted"><ShieldCheck size={18} /></span>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4" style={{ color: '#8A9080' }}><ShieldCheck size={18} /></span>
                 <input
                   type="text"
                   className="input-field pl-11 tracking-[0.5em] font-mono text-center"
@@ -119,12 +130,15 @@ export default function Login() {
                   required
                 />
               </div>
-              <p className="text-[10px] text-brand-text-muted mt-2 text-center bg-brand-bg py-1.5 rounded-lg border border-brand-green/20">
-                <span className="font-bold text-brand-green">Demo Hint:</span> Enter <span className="font-mono">123456</span> to test
+              <p
+                className="text-[10px] mt-2 text-center py-1.5 rounded-lg"
+                style={{ background: 'rgba(107,174,85,0.08)', border: '1px solid rgba(107,174,85,0.15)', color: '#8A9080' }}
+              >
+                <span className="font-bold" style={{ color: '#8DB87A' }}>Demo Hint:</span> Enter <span className="font-mono">123456</span> to test
               </p>
-              <p className="text-xs text-brand-text-muted mt-4 text-center">
+              <p className="text-xs mt-4 text-center" style={{ color: '#8A9080' }}>
                 OTP sent to +91 {phone}.{' '}
-                <button type="button" onClick={() => setStep('phone')} className="text-brand-accent font-semibold hover:underline">Change</button>
+                <button type="button" onClick={() => setStep('phone')} className="font-semibold hover:underline" style={{ color: '#8DB87A' }}>Change</button>
               </p>
             </div>
             <button type="submit" disabled={loading} className="primary-btn">
@@ -136,3 +150,5 @@ export default function Login() {
     </div>
   );
 }
+
+
