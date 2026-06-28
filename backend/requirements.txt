@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+tensorflow
+firebase-admin
+python-multipart
+numpy
