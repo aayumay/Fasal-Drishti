@@ -542,6 +542,35 @@ async def validate_farmland(req: ValidateFarmRequest):
             watch_pct = rem // 2
             high_risk_pct = rem // 3
             critical_pct = rem - watch_pct - high_risk_pct
+    else:
+        # INSTANT FALLBACK: Real-time Weather & Soil Proxy (Resolves instantly for Hackathon demos)
+        try:
+            proxy_url = f"https://api.open-meteo.com/v1/forecast?latitude={center_lat}&longitude={center_lon}&current=temperature_2m,precipitation,soil_moisture_0_to_7cm"
+            async with httpx.AsyncClient(timeout=4.0) as client:
+                presp = await client.get(proxy_url)
+                if presp.status_code == 200:
+                    current = presp.json().get("current", {})
+                    temp = current.get("temperature_2m", 25)
+                    moisture = current.get("soil_moisture_0_to_7cm", 0.25)
+                    
+                    # Compute score based on soil moisture (0.1 to 0.4 range typical)
+                    m_score = min(100, max(0, (moisture - 0.1) / 0.2 * 100))
+                    
+                    # Temp penalty
+                    t_penalty = 0
+                    if temp > 35: t_penalty = (temp - 35) * 2
+                    if temp < 10: t_penalty = (10 - temp) * 2
+                    
+                    health_score = int(max(15, min(95, m_score - t_penalty)))
+                    ndvi_source = "weather_proxy"
+                    
+                    healthy_pct = health_score
+                    rem = 100 - health_score
+                    watch_pct = rem // 2
+                    high_risk_pct = rem // 3
+                    critical_pct = rem - watch_pct - high_risk_pct
+        except Exception as e:
+            print(f"Weather proxy failed: {e}")
 
     infected_fraction = (watch_pct + high_risk_pct + critical_pct) / 100
     standard_ml = area_acres * 500

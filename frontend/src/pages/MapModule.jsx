@@ -713,8 +713,9 @@ export default function MapModule() {
                       <ShieldCheck size={9} /> LIVE NDVI
                     </span>
                   ) : (
-                    <span className="text-[9px] font-bold text-brand-text-muted bg-brand-text/5 px-2 py-1 rounded-lg">
-                      STORED DATA
+                    <span className="text-[9px] font-bold text-brand-accent bg-brand-accent/10 px-2 py-1 rounded-lg flex items-center gap-1" title="Real-time predictive proxy based on Open-Meteo live soil moisture and temperature">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                      LIVE SOIL PROXY
                     </span>
                   )}
                   {activeFarm?.polygonId && (
