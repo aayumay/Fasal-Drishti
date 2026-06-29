@@ -157,9 +157,9 @@ def get_farms(user: dict = Depends(verify_token), db: sqlite3.Connection = Depen
         for r in rows:
             f = dict(r)
             f["coordinates"] = json.loads(f["coordinates"])
-            # Deterministic health score based on farm ID (replacing random)
-            f["score"] = 60 + (f["id"] * 17) % 35
-            f["status"] = "Healthy" if f["score"] > 75 else "Watch"
+            # Remove fake score calculation to enforce "real data only" rule
+            f["score"] = None
+            f["status"] = "Pending Data"
             farms.append(f)
         return farms
     except Exception as e:

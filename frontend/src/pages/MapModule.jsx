@@ -209,6 +209,12 @@ export default function MapModule() {
         setWatchPct(Math.floor(rem * 0.5));
         setHighRiskPct(Math.floor(rem * 0.3));
         setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
+      } else {
+        setFarmScore(null);
+        setHealthyPct(0);
+        setWatchPct(0);
+        setHighRiskPct(0);
+        setCriticalPct(0);
       }
     };
 
@@ -295,6 +301,12 @@ export default function MapModule() {
       setWatchPct(Math.floor(rem * 0.5));
       setHighRiskPct(Math.floor(rem * 0.3));
       setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
+    } else {
+      setFarmScore(null);
+      setHealthyPct(0);
+      setWatchPct(0);
+      setHighRiskPct(0);
+      setCriticalPct(0);
     }
 
     // ─── Auto-poll: check for new satellite passes every 30 minutes ───
@@ -693,85 +705,99 @@ export default function MapModule() {
       {activeFarm ? (
         <>
           {/* Farm Overview Card */}
-          <div className="bg-white rounded-3xl p-6 mb-4 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-brand-text">Farm Overview</h3>
-              <div className="flex items-center gap-2">
-                {isRealNdvi ? (
-                  <span className="text-[9px] font-bold text-brand-green bg-brand-green/10 px-2 py-1 rounded-lg flex items-center gap-1">
-                    <ShieldCheck size={9} /> LIVE NDVI
-                  </span>
-                ) : (
-                  <span className="text-[9px] font-bold text-brand-text-muted bg-brand-text/5 px-2 py-1 rounded-lg">
-                    STORED DATA
-                  </span>
-                )}
-                {activeFarm?.polygonId && (
-                  <button
-                    onClick={() => fetchSatelliteData(activeFarm.polygonId, activeFarm)}
-                    title="Refresh satellite data"
-                    className="w-7 h-7 rounded-lg bg-[#F8F6F2] flex items-center justify-center text-brand-text-muted hover:text-brand-green hover:bg-brand-green/10 transition-all"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {lastSatelliteDate && (
-              <p className="text-[10px] text-brand-text-muted mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                Last satellite pass: <strong>{new Date(lastSatelliteDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong> • Next: ~{(() => { const d = new Date(lastSatelliteDate); d.setDate(d.getDate() + 5); return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); })()}
-              </p>
-            )}
-
-            <div className="flex items-center gap-6">
-              <div className="relative w-28 h-28 flex-shrink-0">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F5F0E8" strokeWidth="4" />
-                  <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#D4A373" strokeWidth="4" strokeDasharray={`${farmScore} ${100 - farmScore}`} strokeLinecap={farmScore > 0 ? "round" : "butt"} />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-brand-text leading-none">{farmScore}%</span>
-                  <span className="text-[10px] text-brand-text-muted mt-1 font-medium">Health</span>
+          {farmScore !== null ? (
+            <div className="bg-white rounded-3xl p-6 mb-4 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-bold text-brand-text">Farm Overview</h3>
+                <div className="flex items-center gap-2">
+                  {isRealNdvi ? (
+                    <span className="text-[9px] font-bold text-brand-green bg-brand-green/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                      <ShieldCheck size={9} /> LIVE NDVI
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold text-brand-text-muted bg-brand-text/5 px-2 py-1 rounded-lg">
+                      STORED DATA
+                    </span>
+                  )}
+                  {activeFarm?.polygonId && (
+                    <button
+                      onClick={() => fetchSatelliteData(activeFarm.polygonId, activeFarm)}
+                      title="Refresh satellite data"
+                      className="w-7 h-7 rounded-lg bg-[#F8F6F2] flex items-center justify-center text-brand-text-muted hover:text-brand-green hover:bg-brand-green/10 transition-all"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
-                {[
-                  { label: 'Healthy', val: healthyPct, color: 'bg-brand-green' },
-                  { label: 'Watch', val: watchPct, color: 'bg-brand-accent' },
-                  { label: 'High Risk', val: highRiskPct, color: 'bg-orange-400' },
-                  { label: 'Critical', val: criticalPct, color: 'bg-brand-danger' },
-                ].map(({ label, val, color }) => (
-                  <div key={label} className="flex items-center justify-between">
-                    <span className="flex items-center gap-2"><div className={`w-2.5 h-2.5 rounded-full ${color}`} /><span className="text-brand-text-muted">{label}</span></span>
-                    <span className="text-brand-text font-bold">{val}%</span>
+
+              {lastSatelliteDate && (
+                <p className="text-[10px] text-brand-text-muted mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  Last satellite pass: <strong>{new Date(lastSatelliteDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong> • Next: ~{(() => { const d = new Date(lastSatelliteDate); d.setDate(d.getDate() + 5); return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); })()}
+                </p>
+              )}
+
+              <div className="flex items-center gap-6">
+                <div className="relative w-28 h-28 flex-shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F5F0E8" strokeWidth="4" />
+                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#D4A373" strokeWidth="4" strokeDasharray={`${farmScore} ${100 - farmScore}`} strokeLinecap={farmScore > 0 ? "round" : "butt"} />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-brand-text leading-none">{farmScore}%</span>
+                    <span className="text-[10px] text-brand-text-muted mt-1 font-medium">Health</span>
                   </div>
-                ))}
+                </div>
+                <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
+                  {[
+                    { label: 'Healthy', val: healthyPct, color: 'bg-brand-green' },
+                    { label: 'Watch', val: watchPct, color: 'bg-brand-accent' },
+                    { label: 'High Risk', val: highRiskPct, color: 'bg-orange-400' },
+                    { label: 'Critical', val: criticalPct, color: 'bg-brand-danger' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} className="flex items-center justify-between">
+                      <span className="flex items-center gap-2"><div className={`w-2.5 h-2.5 rounded-full ${color}`} /><span className="text-brand-text-muted">{label}</span></span>
+                      <span className="text-brand-text font-bold">{val}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-8 mb-4 shadow-sm flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-full bg-[#F8F6F2] flex items-center justify-center mb-4 text-brand-accent">
+                <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              </div>
+              <h3 className="text-base font-bold text-brand-text mb-2">Awaiting Satellite Pass</h3>
+              <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: '#7A8A7C', lineHeight: 1.6 }}>
+                Sentinel-2 has not yet processed NDVI data for this area. We are polling automatically and this dashboard will update when the next satellite pass is available.
+              </p>
+            </div>
+          )}
 
           {/* Predicted Spread & Confidence Card */}
-          <div className="bg-white rounded-3xl p-6 mb-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <p className="text-[11px] text-brand-text-muted font-medium mb-1.5">Predicted Spread</p>
-                <p className="text-brand-text font-bold text-base flex items-center gap-1.5 mb-1">
-                  {spreadDir} <ArrowUpRight size={16} className="text-brand-accent" />
-                </p>
-                <p className="text-[12px] text-brand-text-muted">{spreadDays}</p>
-              </div>
-              <div className="w-px h-12 bg-brand-text/10"></div>
-              <div className="flex-1">
-                <p className="text-[11px] text-brand-text-muted font-medium mb-1.5">Confidence</p>
-                <p className="text-brand-text font-bold text-xl">{confidence}%</p>
-                <div className="flex items-center gap-1 mt-1 text-brand-green">
-                  <ShieldCheck size={12} />
-                  <span className="text-[10px] font-semibold">AI Verified</span>
+          {farmScore !== null ? (
+            <div className="bg-white rounded-3xl p-6 mb-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-[11px] text-brand-text-muted font-medium mb-1.5">Predicted Spread</p>
+                  <p className="text-brand-text font-bold text-base flex items-center gap-1.5 mb-1">
+                    {spreadDir} <ArrowUpRight size={16} className="text-brand-accent" />
+                  </p>
+                  <p className="text-[12px] text-brand-text-muted">{spreadDays}</p>
+                </div>
+                <div className="w-px h-12 bg-brand-text/10"></div>
+                <div className="flex-1">
+                  <p className="text-[11px] text-brand-text-muted font-medium mb-1.5">Confidence</p>
+                  <p className="text-brand-text font-bold text-xl">{confidence}%</p>
+                  <div className="flex items-center gap-1 mt-1 text-brand-green">
+                    <ShieldCheck size={12} />
+                    <span className="text-[10px] font-semibold">AI Verified</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
           {/* Pesticide ROI Dashboard */}
           {activeFarm && (
