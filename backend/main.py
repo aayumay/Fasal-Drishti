@@ -100,6 +100,8 @@ class FarmRegistration(BaseModel):
     crop: str
     area_acres: float
     coordinates: list
+    polygon_id: str | None = None
+    health_score: int | None = None
 
 class SpreadRequest(BaseModel):
     farm_id: str
@@ -140,8 +142,8 @@ def save_farm(farm: FarmRegistration, user: dict = Depends(verify_token), db: sq
         c = db.cursor()
         coords_json = json.dumps(farm.coordinates)
         now = datetime.now().isoformat()
-        c.execute("INSERT INTO farms (user_id, name, crop, area_acres, coordinates, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-                  (user["uid"], farm.name, farm.crop, farm.area_acres, coords_json, now))
+        c.execute("INSERT INTO farms (user_id, name, crop, area_acres, coordinates, created_at, polygon_id, health_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                  (user["uid"], farm.name, farm.crop, farm.area_acres, coords_json, now, farm.polygon_id, farm.health_score))
         db.commit()
         return {"status": "success", "farm_id": c.lastrowid, "message": "Farm saved successfully."}
     except Exception as e:
@@ -158,8 +160,13 @@ def get_farms(user: dict = Depends(verify_token), db: sqlite3.Connection = Depen
             f = dict(r)
             f["coordinates"] = json.loads(f["coordinates"])
             # Remove fake score calculation to enforce "real data only" rule
-            f["score"] = None
-            f["status"] = "Pending Data"
+            f["score"] = f.get("health_score")
+            
+            # Map sqlite columns to frontend camelCase
+            f["polygonId"] = f.get("polygon_id")
+            f["healthScore"] = f.get("health_score")
+            
+            f["status"] = "Pending Data" if f["healthScore"] is None else ("Healthy" if f["healthScore"] > 75 else "Watch")
             farms.append(f)
         return farms
     except Exception as e:
