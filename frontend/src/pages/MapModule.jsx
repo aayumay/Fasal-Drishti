@@ -98,13 +98,19 @@ export default function MapModule() {
 
     // Block if explicitly detected as non-farmland
     if (validation && validation.is_farmland === false) {
-      const label = validation.classification === 'urban_or_water'
-        ? 'urban area, buildings, or water body'
-        : 'bare soil or fallow land with no active crop';
-      setValidationError(
-        `This area appears to be a ${label} (NDVI: ${validation.ndvi_mean?.toFixed(2) ?? 'N/A'}). ` +
-        `Please select an actual agricultural field.`
-      );
+      if (validation.classification === 'excessive_buildings') {
+        setValidationError(
+          `The selected area contains too many buildings (${validation.building_pct}% of the field). A valid agricultural field cannot have more than 10% building coverage. Please redraw your selection.`
+        );
+      } else {
+        const label = validation.classification === 'urban_or_water'
+          ? 'urban area, buildings, or water body'
+          : 'bare soil or fallow land with no active crop';
+        setValidationError(
+          `This area appears to be a ${label} (NDVI: ${validation.ndvi_mean?.toFixed(2) ?? 'N/A'}). ` +
+          `Please select an actual agricultural field.`
+        );
+      }
       return;
     }
 

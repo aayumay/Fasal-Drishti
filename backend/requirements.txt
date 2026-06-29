@@ -4,3 +4,5 @@ tensorflow
 firebase-admin
 python-multipart
 numpy
+shapely
+pyproj

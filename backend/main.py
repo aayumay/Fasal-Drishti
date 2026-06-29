@@ -10,6 +10,10 @@ import sqlite3
 import json
 from datetime import datetime
 import math
+from shapely.geometry import Polygon as ShapelyPolygon, shape
+from pyproj import Geod
+import pyproj
+from shapely.ops import transform
 
 # Load environment variables
 load_dotenv()
@@ -404,8 +408,78 @@ async def validate_farmland(req: ValidateFarmRequest):
             is_farmland = True
             classification = "active_farmland"
             confidence_pct = 95
-    else:
-        # Fallback: query OSM Overpass for land-use tags
+    # --- Advanced Validation: Building Area Intersection via Overpass ---
+    building_pct = 0
+    total_building_area_sqm = 0
+    try:
+        # Construct shapely polygon for the field
+        field_poly = ShapelyPolygon([[c[1], c[0]] for c in coords])
+        
+        # Calculate bounding box for Overpass
+        min_lon, min_lat, max_lon, max_lat = field_poly.bounds
+        
+        # Expand slightly to ensure we catch everything
+        margin = 0.001
+        bbox = f"{min_lat-margin},{min_lon-margin},{max_lat+margin},{max_lon+margin}"
+
+        overpass_url = "https://overpass-api.de/api/interpreter"
+        # Request all building geometries inside bounding box
+        overpass_query = f"""
+        [out:json][timeout:15];
+        (
+          way["building"]({bbox});
+          relation["building"]({bbox});
+        );
+        out geom;
+        """
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(overpass_url, data={"data": overpass_query})
+            if resp.status_code == 200:
+                osm_data = resp.json()
+                
+                # Projection for area calculation (WGS84 to local metric projection)
+                geod = Geod(ellps="WGS84")
+                field_area_sqm, _ = geod.geometry_area_perimeter(field_poly)
+                field_area_sqm = abs(field_area_sqm)
+                
+                for element in osm_data.get("elements", []):
+                    if element.get("type") == "way":
+                        geom = element.get("geometry", [])
+                        if len(geom) >= 3:
+                            # Close the polygon if not closed
+                            b_coords = [[pt["lon"], pt["lat"]] for pt in geom]
+                            if b_coords[0] != b_coords[-1]:
+                                b_coords.append(b_coords[0])
+                            
+                            try:
+                                b_poly = ShapelyPolygon(b_coords)
+                                if not b_poly.is_valid:
+                                    b_poly = b_poly.buffer(0)
+                                    
+                                if field_poly.intersects(b_poly):
+                                    intersection = field_poly.intersection(b_poly)
+                                    if not intersection.is_empty:
+                                        # Calculate area of intersection in sqm
+                                        i_area, _ = geod.geometry_area_perimeter(intersection)
+                                        total_building_area_sqm += abs(i_area)
+                            except Exception:
+                                pass
+                
+                if field_area_sqm > 0:
+                    building_pct = round((total_building_area_sqm / field_area_sqm) * 100, 2)
+                    
+    except Exception as e:
+        print(f"Building area calculation failed: {e}")
+
+    # Enforce 10% building limit rule
+    if building_pct > 10:
+        is_farmland = False
+        classification = "excessive_buildings"
+        confidence_pct = 99
+        ndvi_source = "osm_buildings"
+    elif is_farmland is None:
+        # Fallback: query OSM Overpass for land-use tags (original logic)
         overpass_url = "https://overpass-api.de/api/interpreter"
         overpass_query = f"""
         [out:json][timeout:10];
@@ -421,8 +495,6 @@ async def validate_farmland(req: ValidateFarmRequest):
                 resp = await client.post(overpass_url, data={"data": overpass_query})
                 if resp.status_code == 200:
                     osm_data = resp.json()
-                    farm_tags_found = osm_data.get("elements", [{}])[0].get("tags", {}).get("total", 0) if osm_data.get("elements") else 0
-                    # count total elements
                     farm_tags_found = len([e for e in osm_data.get("elements", []) if e.get("type") in ("way","relation")])
         except Exception:
             pass
@@ -433,7 +505,6 @@ async def validate_farmland(req: ValidateFarmRequest):
             confidence_pct = 80
             ndvi_source = "osm"
         else:
-            # Cannot determine — return unknown so frontend asks user to verify
             is_farmland = None
             classification = "unverified"
             confidence_pct = 0
@@ -490,7 +561,8 @@ async def validate_farmland(req: ValidateFarmRequest):
         "critical_pct": critical_pct,
         "standard_spray_ml": int(standard_ml),
         "precision_spray_ml": int(precision_ml),
-        "savings_pct": savings
+        "savings_pct": savings,
+        "building_pct": building_pct
     }
 
 @app.post("/api/disease/spread")
