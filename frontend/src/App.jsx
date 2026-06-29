@@ -32,7 +32,7 @@ function AppLayout() {
       <BottomNavigation />
       
       {/* Centered Content Wrapper for Large Screens */}
-      <div className={`flex flex-col flex-1 w-full ${!noLayout ? 'max-w-7xl mx-auto' : ''}`}>
+      <div className={`flex flex-col flex-1 w-full min-h-0 ${!noLayout ? 'max-w-7xl mx-auto' : ''}`}>
         <Routes>
           <Route path="/" element={<Navigate to="/splash" replace />} />
         <Route path="/splash" element={<Splash />} />
