@@ -1,23 +1,29 @@
 import { useState, useEffect } from 'react';
-import { Bell, Settings, Wind, Droplets, CloudRain, ChevronRight, CloudSun, MapPin, Sprout, Plus } from 'lucide-react';
+import { Bell, Settings, Wind, Droplets, CloudRain, ChevronRight, CloudSun, MapPin, Sprout, Plus, Leaf } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { CardSkeleton, WeatherSkeleton } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import { useFarmContext } from '../context/FarmContext';
 import { useUserContext } from '../context/UserContext';
+import { useLanguage } from '../context/LanguageContext';
+
+const S = {
+  label: { fontFamily: 'Manrope,sans-serif', fontWeight: 700, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#B0BDB2' },
+  sectionTitle: { fontFamily: 'Playfair Display,serif', fontWeight: 600, fontSize: '20px', color: '#1C2B1E', letterSpacing: '-0.01em' },
+};
 
 const Home = () => {
   const navigate = useNavigate();
   const { myFarms } = useFarmContext();
   const { userName } = useUserContext();
+  const { t } = useLanguage();
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [userLocation, setUserLocation] = useState('');
 
   useEffect(() => {
-    // 1. Fetch weather ONLY when hardware GPS resolves
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
@@ -32,14 +38,12 @@ const Home = () => {
           } catch {
             setUserLocation('Location unavailable');
           }
-          // Pass the precise hardware coords to backend
           loadWeather(lat, lon);
         },
         (err) => {
           console.error("GPS Denied:", err);
           setUserLocation('Location Access Denied');
           setWeatherLoading(false);
-          // STRICT CONSTRAINT: No hardcoded fallback coordinates allowed.
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
@@ -54,16 +58,15 @@ const Home = () => {
       const weatherRes = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
       if (weatherRes.ok) {
         const wData = await weatherRes.json();
-        setWeather({ 
-          temp: wData.temp, 
-          condition: wData.condition, 
-          rainProb: wData.rainProb, 
-          humidity: wData.humidity, 
-          wind: wData.windSpeed, 
+        setWeather({
+          temp: wData.temp,
+          condition: wData.condition,
+          rainProb: wData.rainProb,
+          humidity: wData.humidity,
+          wind: wData.windSpeed,
           tempChange: wData.advisory || ''
         });
       } else {
-        console.error("Weather API returned error:", weatherRes.status);
         setWeather(null);
       }
     } catch (err) {
@@ -74,132 +77,200 @@ const Home = () => {
     }
   };
 
-  // Farm context data parsing
   const displayFarms = myFarms.map(f => {
     let score = f.healthScore !== undefined && f.healthScore !== null ? f.healthScore : undefined;
-    
-    let color = 'bg-brand-text/50';
+    let colorDot = '#B0BDB2';
+    let badge = '';
     if (score !== undefined) {
-      if (score > 80) color = 'bg-brand-green';
-      else if (score >= 50) color = 'bg-orange-400';
-      else color = 'bg-brand-danger';
+      if (score > 80) { colorDot = '#2F5D3A'; badge = t('healthy'); }
+      else if (score >= 50) { colorDot = '#D9A027'; badge = t('watch'); }
+      else { colorDot = '#C0392B'; badge = t('risk'); }
     }
-
     return {
       id: f.id,
       name: f.name || 'My Farm',
       size: f.area_acres ? `${f.area_acres} Acres` : 'Unknown',
       crop: f.crop || 'Unknown',
-      scoreDisplay: score !== undefined ? `${score}%` : 'Evaluating...',
+      scoreDisplay: score !== undefined ? `${score}%` : t('evaluating'),
       location: f.locationName || f.location || 'Unknown Location',
-      yield: f.yield || 'Evaluating...',
-      status: score !== undefined ? (score > 80 ? 'Healthy' : score >= 50 ? 'Watch' : 'High Risk') : 'Pending',
-      color: color
+      yield: f.yield || t('evaluating'),
+      status: score !== undefined ? badge : 'Pending',
+      colorDot, badge,
     };
   });
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? t('greeting_morning') : hour < 17 ? t('greeting_afternoon') : t('greeting_evening');
+
   return (
-    <div className="pt-6 px-5 md:px-8 pb-6 h-full overflow-y-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+    <div className="pt-6 px-5 md:px-8 pb-6 h-full overflow-y-auto" style={{ background: '#F8F6F2' }}>
+
+      {/* ── Header ── */}
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Sprout size={20} className="text-brand-green md:w-8 md:h-8" strokeWidth={1.5} />
-            <h1 className="font-serif tracking-tight text-[22px] md:text-4xl lg:text-5xl font-bold text-brand-text truncate max-w-[200px] md:max-w-none">
-              Hello, {userName ? userName : 'Farmer'}
-            </h1>
-          </div>
-          <div className="flex items-center gap-1.5 text-brand-text-muted text-sm md:text-base">
-            <MapPin size={13} className="md:w-4 md:h-4" />
-            <span>{userLocation || 'Detecting location...'}</span>
-          </div>
+          <p style={S.label} className="mb-1">{greeting}</p>
+          <h1
+            style={{
+              fontFamily: 'Playfair Display, serif',
+              fontWeight: 700,
+              fontSize: 'clamp(22px, 5vw, 36px)',
+              color: '#1C2B1E',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
+            }}
+          >
+            {userName ? userName : t('farmer')}
+          </h1>
+          {userLocation && (
+            <div className="flex items-center gap-1.5 mt-1.5" style={{ color: '#B0BDB2' }}>
+              <MapPin size={12} strokeWidth={1.8} />
+              <span style={{ fontFamily: 'Manrope,sans-serif', fontSize: '12px', fontWeight: 500 }}>
+                {userLocation}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => navigate('/alerts')} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all relative">
-            <Bell size={20} />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand-danger rounded-full ring-2 ring-white"></span>
+        <div className="flex gap-2 mt-1">
+          <button
+            onClick={() => navigate('/alerts')}
+            className="relative w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
+            style={{ background: '#fff', border: '1px solid rgba(35,66,41,0.09)', boxShadow: '0 1px 4px rgba(35,66,41,0.06)', color: '#7A8A7C' }}
+          >
+            <Bell size={17} strokeWidth={1.7} />
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: '#C0392B' }} />
           </button>
-          <button onClick={() => navigate('/menu')} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
-            <Settings size={20} />
+          <button
+            onClick={() => navigate('/menu')}
+            className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
+            style={{ background: '#fff', border: '1px solid rgba(35,66,41,0.09)', boxShadow: '0 1px 4px rgba(35,66,41,0.06)', color: '#7A8A7C' }}
+          >
+            <Settings size={17} strokeWidth={1.7} />
           </button>
         </div>
       </div>
 
-      {/* Weather Widget */}
+      {/* ── Weather Card ── */}
       {weatherLoading ? (
         <WeatherSkeleton />
       ) : weather ? (
-        <div className="card p-6 mb-6 animate-fade-in">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex flex-col">
-              <span className="text-5xl font-semibold text-brand-text">{weather.temp}°</span>
-              <span className="text-brand-text-muted text-sm mt-0.5">{weather.condition}</span>
+        <div
+          className="animate-fade-in mb-6"
+          style={{
+            background: 'linear-gradient(135deg, #234229 0%, #2F5D3A 100%)',
+            borderRadius: '20px',
+            padding: '24px',
+            boxShadow: '0 4px 24px rgba(35,66,41,0.2)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Decorative circle */}
+          <div style={{
+            position: 'absolute', right: '-20px', top: '-20px',
+            width: '120px', height: '120px',
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '50%',
+          }} />
+          <div className="flex justify-between items-start mb-5">
+            <div>
+              <p style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 500, fontSize: '12px', color: 'rgba(248,246,242,0.6)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {t('current_weather')}
+              </p>
+              <div style={{ fontFamily: 'Playfair Display,serif', fontWeight: 500, fontSize: '52px', color: '#F8F6F2', lineHeight: 1 }}>
+                {weather.temp}°
+              </div>
+              <p style={{ fontFamily: 'Manrope,sans-serif', fontSize: '13px', color: 'rgba(248,246,242,0.7)', fontWeight: 500, marginTop: '4px' }}>
+                {weather.condition}
+              </p>
             </div>
-            <div className="w-16 h-16 bg-brand-bg rounded-2xl flex items-center justify-center">
-              <CloudSun size={36} className="text-brand-accent" strokeWidth={1.5} />
+            <div
+              style={{
+                width: '52px', height: '52px', borderRadius: '14px',
+                background: 'rgba(255,255,255,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <CloudSun size={28} strokeWidth={1.4} style={{ color: '#D9C27A' }} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-brand-text/5">
-            <div className="flex flex-col items-center gap-1">
-              <Wind size={15} className="text-brand-text-muted" />
-              <span className="text-xs font-semibold text-brand-text">{weather.wind} km/h</span>
-              <span className="text-[9px] text-brand-text-muted font-medium">Wind</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <Droplets size={15} className="text-brand-text-muted" />
-              <span className="text-xs font-semibold text-brand-text">{weather.humidity}%</span>
-              <span className="text-[9px] text-brand-text-muted font-medium">Humidity</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <CloudRain size={15} className="text-brand-text-muted" />
-              <span className="text-xs font-semibold text-brand-text">{weather.rainProb} mm</span>
-              <span className="text-[9px] text-brand-text-muted font-medium">Rain</span>
-            </div>
+
+          <div
+            className="grid grid-cols-3 gap-3 pt-4"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            {[
+              { icon: Wind, label: t('wind'), value: `${weather.wind} km/h` },
+              { icon: Droplets, label: t('humidity'), value: `${weather.humidity}%` },
+              { icon: CloudRain, label: t('rain'), value: `${weather.rainProb} mm` },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex flex-col items-center gap-1.5">
+                <Icon size={14} strokeWidth={1.7} style={{ color: 'rgba(248,246,242,0.5)' }} />
+                <span style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 700, fontSize: '13px', color: '#F8F6F2' }}>{value}</span>
+                <span style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 500, fontSize: '9px', color: 'rgba(248,246,242,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+              </div>
+            ))}
           </div>
+
           {weather.tempChange && (
-            <div className="mt-4 pt-3 border-t border-brand-text/5 text-center">
-              <span className="text-[10px] text-brand-text-muted font-bold uppercase block mb-1">Advisory</span>
-              <span className="text-xs font-medium text-brand-text leading-relaxed block px-2">{weather.tempChange}</span>
+            <div
+              className="mt-4 pt-4"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <p style={{ fontFamily: 'Manrope,sans-serif', fontSize: '11px', fontWeight: 500, color: 'rgba(248,246,242,0.6)', lineHeight: 1.6 }}>
+                <span style={{ fontWeight: 700, color: '#D9C27A' }}>{t('advisory')}</span>
+                {weather.tempChange}
+              </p>
             </div>
           )}
         </div>
       ) : null}
 
-      {/* Filters */}
+      {/* ── Filter pills ── */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
-        {['All', 'Fruit', 'Orchards', 'Grains'].map((cat) => (
+        {[{id: 'All', label: t('filter_all')}, {id: 'Fruit', label: t('filter_fruit')}, {id: 'Orchards', label: t('filter_orchards')}, {id: 'Grains', label: t('filter_grains')}].map((cat) => (
           <button
-            key={cat}
-            onClick={() => setFilter(cat)}
-            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
-              filter === cat ? 'bg-brand-green text-white shadow-sm' : 'bg-white text-brand-text-muted hover:text-brand-text shadow-sm'
-            }`}
+            key={cat.id}
+            onClick={() => setFilter(cat.id)}
+            style={{
+              fontFamily: 'Manrope,sans-serif',
+              fontWeight: 600,
+              fontSize: '13px',
+              padding: '8px 18px',
+              borderRadius: '10px',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
+              background: filter === cat.id ? '#234229' : '#fff',
+              color: filter === cat.id ? '#F8F6F2' : '#7A8A7C',
+              border: filter === cat.id ? '1px solid #234229' : '1px solid rgba(35,66,41,0.1)',
+              boxShadow: filter === cat.id ? '0 2px 8px rgba(35,66,41,0.2)' : '0 1px 3px rgba(35,66,41,0.04)',
+            }}
           >
-            {cat}
+            {cat.label}
           </button>
         ))}
       </div>
 
-      {/* My Fields Section */}
+      {/* ── My Fields ── */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-brand-text">My Fields</h3>
-        <button onClick={() => navigate('/map')} className="text-brand-text-muted text-sm font-semibold flex items-center hover:text-brand-accent transition-colors gap-0.5">
-          View All <ChevronRight size={16} />
+        <h2 style={S.sectionTitle}>{t('my_fields')}</h2>
+        <button
+          onClick={() => navigate('/map')}
+          className="flex items-center gap-0.5 transition-colors duration-200"
+          style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 600, fontSize: '13px', color: '#7A8A7C' }}
+        >
+          {t('view_all')} <ChevronRight size={15} strokeWidth={2} />
         </button>
       </div>
 
-      <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 pb-28 md:pb-8">
+      <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 pb-28 md:pb-8">
         {displayFarms.length === 0 ? (
           <EmptyState
             icon={Plus}
-            title="No Fields Yet"
-            message="No fields added. Go to the Map to register your first field."
+            title={t('no_fields_yet')}
+            message={t('no_fields_desc')}
             action={
-              <button
-                onClick={() => navigate('/map')}
-                className="primary-btn !w-auto !px-6"
-              >
-                Add Your First Field
+              <button onClick={() => navigate('/map')} className="primary-btn !w-auto !px-8">
+                {t('add_first_field')}
               </button>
             }
           />
@@ -207,37 +278,68 @@ const Home = () => {
           displayFarms.map((farm, idx) => (
             <div
               key={farm.id}
-              className="card overflow-hidden cursor-pointer hover:shadow-md transition-all active:scale-[0.99] animate-fade-in-up"
-              style={{ animationDelay: `${idx * 100}ms` }}
+              className="card overflow-hidden cursor-pointer animate-fade-in-up"
+              style={{ animationDelay: `${idx * 80}ms` }}
               onClick={() => navigate('/map')}
             >
-              <div className="p-5 pb-3">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-brand-green-light rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Sprout size={22} className="text-brand-green" strokeWidth={1.5} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-bold text-brand-text text-[16px] truncate">{farm.name}</h4>
-                      <span className="bg-brand-green-light text-brand-green text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-2">
-                        {farm.yield}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-brand-text-muted text-[12px] mt-0.5">
-                      <MapPin size={10} />
-                      <span className="truncate">{farm.location}</span>
-                      <span className="mx-1 flex-shrink-0">•</span>
-                      <span className="flex-shrink-0">{farm.size}</span>
-                    </div>
-                  </div>
+              {/* Farm image */}
+              <div className="relative" style={{ height: '148px', overflow: 'hidden' }}>
+                <img
+                  src="/farm_background.png"
+                  alt={farm.name}
+                  className="w-full h-full object-cover"
+                  style={{ transition: 'transform 0.4s ease' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,43,30,0.6) 0%, transparent 55%)' }} />
+                {/* Health badge */}
+                <div
+                  className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+                  style={{ background: 'rgba(248,246,242,0.92)', backdropFilter: 'blur(8px)' }}
+                >
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: farm.colorDot, flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 700, fontSize: '11px', color: '#1C2B1E' }}>
+                    {farm.scoreDisplay}
+                  </span>
+                </div>
+                {/* Crop tag */}
+                <div
+                  className="absolute top-3 right-3 px-2.5 py-1 rounded-lg"
+                  style={{ background: 'rgba(248,246,242,0.9)', backdropFilter: 'blur(8px)' }}
+                >
+                  <span style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 700, fontSize: '10px', color: '#2F5D3A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {farm.crop}
+                  </span>
                 </div>
               </div>
-              <div className="relative h-40 mx-3 mb-3 rounded-2xl overflow-hidden bg-brand-bg">
-                <img src="/farm_background.png" alt={farm.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${farm.color}`}></div>
-                  <span className="text-white text-xs font-bold drop-shadow-md">Health Score: {farm.scoreDisplay}</span>
+
+              {/* Farm details */}
+              <div className="p-4">
+                <div className="flex justify-between items-start">
+                  <div className="min-w-0 flex-1">
+                    <h3 style={{ fontFamily: 'Playfair Display,serif', fontWeight: 600, fontSize: '16px', color: '#1C2B1E', marginBottom: '4px', letterSpacing: '-0.01em' }}>
+                      {farm.name}
+                    </h3>
+                    <div className="flex items-center gap-1" style={{ color: '#B0BDB2' }}>
+                      <MapPin size={10} strokeWidth={1.8} />
+                      <span style={{ fontFamily: 'Manrope,sans-serif', fontSize: '11px', fontWeight: 500 }} className="truncate">
+                        {farm.location}
+                      </span>
+                      <span style={{ fontSize: '11px', margin: '0 4px' }}>·</span>
+                      <span style={{ fontFamily: 'Manrope,sans-serif', fontSize: '11px', fontWeight: 500, flexShrink: 0 }}>
+                        {farm.size}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className="ml-3 px-2.5 py-1 rounded-lg flex-shrink-0"
+                    style={{ background: 'rgba(47,93,58,0.08)', border: '1px solid rgba(47,93,58,0.12)' }}
+                  >
+                    <span style={{ fontFamily: 'Manrope,sans-serif', fontWeight: 700, fontSize: '11px', color: '#2F5D3A' }}>
+                      {farm.yield !== 'Evaluating...' ? farm.yield : farm.status}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

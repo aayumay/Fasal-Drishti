@@ -9,7 +9,7 @@ import VendorDrawer from '../components/VendorDrawer';
 
 export default function Diagnose() {
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherError, setWeatherError] = useState(null);
@@ -97,20 +97,20 @@ export default function Diagnose() {
   };
 
   return (
-    <div className="pt-6 px-5 pb-24 flex-1 overflow-y-auto">
+    <div className="pt-6 px-5 pb-24 flex-1 overflow-y-auto" style={{ background: '#F8F6F2' }}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate('/home')} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-serif tracking-tight text-xl font-bold text-brand-text">Field Insights</h1>
+        <h1 style={{ fontFamily: 'Playfair Display, serif', fontWeight: 700, fontSize: '20px', color: '#1C2B1E', letterSpacing: '-0.02em' }}>{t('field_insights')}</h1>
       </div>
 
       {activeFarm ? (
         <>
           {/* Factors Influencing Risk */}
           <div className="mb-6">
-            <h3 className="text-sm font-bold text-brand-text mb-4">Factors Influencing Risk</h3>
+            <h3 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: '14px', color: '#1C2B1E', marginBottom: '16px' }}>{t('factors_risk')}</h3>
             {weatherLoading ? (
               <FactorsSkeleton />
             ) : weatherError ? (
@@ -121,27 +121,27 @@ export default function Diagnose() {
                   <div className="bg-brand-bg rounded-2xl p-4 text-center">
                     <Droplets size={18} className="text-brand-accent mx-auto mb-2" />
                     <p className="text-xl font-bold text-brand-text">{weather.humidity}%</p>
-                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">Humidity</p>
+                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">{t('humidity')}</p>
                   </div>
                   <div className="bg-brand-bg rounded-2xl p-4 text-center">
                     <Thermometer size={18} className="text-brand-accent mx-auto mb-2" />
                     <p className="text-xl font-bold text-brand-text">{weather.temp}°C</p>
-                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">Temperature</p>
+                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">{t('temperature')}</p>
                   </div>
                   <div className="bg-brand-bg rounded-2xl p-4 text-center">
                     <Wind size={18} className="text-brand-accent mx-auto mb-2" />
                     <p className="text-xl font-bold text-brand-text">{weather.windSpeed}</p>
-                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">Wind km/h</p>
+                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">{t('wind_kmh')}</p>
                   </div>
                   <div className="bg-brand-bg rounded-2xl p-4 text-center">
                     <CloudRain size={18} className="text-brand-accent mx-auto mb-2" />
                     <p className="text-xl font-bold text-brand-text">{weather.rainProb}%</p>
-                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">Rain Prob.</p>
+                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">{t('rain_prob')}</p>
                   </div>
                   <div className="bg-brand-bg rounded-2xl p-4 text-center col-span-2">
                     <Sprout size={18} className="text-brand-accent mx-auto mb-2" />
                     <p className="text-xl font-bold text-brand-text">{activeFarm.crop}</p>
-                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">Crop Evaluated</p>
+                    <p className="text-[10px] text-brand-text-muted font-medium mt-0.5">{t('crop_evaluated')}</p>
                   </div>
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function Diagnose() {
             <div className="mb-6 animate-fade-in">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp size={18} className="text-brand-danger" />
-                <h3 className="text-sm font-bold text-brand-text">Disease Spread Forecast</h3>
+                <h3 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: '14px', color: '#1C2B1E' }}>{t('disease_spread_forecast')}</h3>
               </div>
               <div className="card p-5 mb-4 border-l-4 border-l-brand-danger">
                 <p className="text-sm text-brand-text-muted leading-relaxed">
@@ -203,7 +203,7 @@ export default function Diagnose() {
           <div className="card p-5 mb-6 border-l-4 border-l-brand-danger animate-fade-in">
             <div className="flex items-center gap-2 mb-4">
               <Lightbulb size={16} className="text-brand-danger" />
-              <h3 className="font-bold text-brand-text text-sm">Why Are We Predicting Risk?</h3>
+              <h3 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: '14px', color: '#1C2B1E' }}>{t('why_predicting_risk')}</h3>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="bg-brand-bg rounded-xl px-3.5 py-2.5">
@@ -224,7 +224,7 @@ export default function Diagnose() {
 
           {/* What You Can Do */}
           <div className="mb-6">
-            <h3 className="text-sm font-bold text-brand-text mb-3">What You Can Do</h3>
+            <h3 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: '14px', color: '#1C2B1E', marginBottom: '12px' }}>{t('what_you_can_do')}</h3>
             <div className="card p-5 space-y-3">
               {['Apply recommended fungicide', 'Ensure proper field drainage', 'Avoid overhead irrigation', 'Monitor field after 3 days'].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
@@ -236,7 +236,7 @@ export default function Diagnose() {
           </div>
 
           <button onClick={() => navigate('/action-plan')} className="primary-btn">
-            View Action Plan
+            {t('view_action_plan')}
           </button>
         </>
       ) : (
@@ -244,15 +244,15 @@ export default function Diagnose() {
           <div className="w-16 h-16 bg-brand-bg rounded-full flex items-center justify-center mb-4">
             <Sprout size={24} className="text-brand-green" />
           </div>
-          <h3 className="text-base font-bold text-brand-text mb-2">No Farm Data</h3>
+          <h3 className="text-base font-bold text-brand-text mb-2">{t('no_farm_data')}</h3>
           <p className="text-xs text-brand-text-muted mb-6 leading-relaxed">
-            We need a farm boundary to analyze satellite data and provide disease predictions.
+            {t('no_farm_desc')}
           </p>
           <button 
             onClick={() => navigate('/map')}
             className="bg-brand-green/10 text-brand-green font-bold text-xs px-6 py-3 rounded-xl hover:bg-brand-green/20 transition-colors w-full"
           >
-            Go to Map & Draw Farm
+            {t('go_to_map')}
           </button>
         </div>
       )}
@@ -263,9 +263,8 @@ export default function Diagnose() {
           <label className="flex items-center justify-center w-14 h-14 bg-brand-green text-white rounded-full shadow-xl cursor-pointer hover:bg-brand-green/90 transition-transform active:scale-95 group">
             <Camera size={24} />
             <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageUpload} />
-            {/* Tooltip */}
             <span className="absolute right-16 bg-brand-text text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              Scan Leaf
+              {t('scan_leaf')}
             </span>
           </label>
         </div>
@@ -282,8 +281,8 @@ export default function Diagnose() {
             {scanLoading ? (
               <div className="flex flex-col items-center justify-center py-10">
                 <Loader2 size={40} className="text-brand-green animate-spin mb-4" />
-                <h3 className="text-lg font-bold text-brand-text">Analyzing Leaf...</h3>
-                <p className="text-sm text-brand-text-muted text-center mt-2">AI is scanning for pests and diseases.</p>
+                <h3 className="text-lg font-bold text-brand-text">{t('analyzing_leaf')}</h3>
+                <p className="text-sm text-brand-text-muted text-center mt-2">{t('ai_scanning')}</p>
               </div>
             ) : scanResult ? (
               <div className="py-2 animate-fade-in">
@@ -304,13 +303,13 @@ export default function Diagnose() {
                 </h3>
                 {!scanResult.error && (
                   <p className="text-center text-brand-text-muted text-sm mb-6">
-                    Confidence: <span className="font-bold text-brand-text">{scanResult.confidence}%</span>
+                    {t('confidence')}: <span className="font-bold text-brand-text">{scanResult.confidence}%</span>
                   </p>
                 )}
                 
                 <div className={`rounded-2xl p-4 mb-6 ${scanResult.predictionClass === 'Invalid_Image' ? 'bg-orange-400/10 border border-orange-400/50' : 'bg-brand-bg'}`}>
                   <div className="flex justify-between items-start mb-3">
-                    <h4 className="text-xs font-bold text-brand-text-muted uppercase mt-1">Recommended Action</h4>
+                    <h4 className="text-xs font-bold text-brand-text-muted uppercase mt-1">{t('recommended_action')}</h4>
                     <VoiceSpeakerButton text={scanResult.action} lang={language} />
                   </div>
                   <p className="text-sm text-brand-text font-medium leading-relaxed">
@@ -323,13 +322,13 @@ export default function Diagnose() {
                     onClick={() => setIsVendorDrawerOpen(true)}
                     className="mb-4 flex items-center justify-center w-full gap-2 bg-brand-text hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-sm transition-colors"
                   >
-                    <span className="text-lg">🛒</span> Procure Recommended Treatment
+                    <span className="text-lg">🛒</span> {t('procure_treatment')}
                   </button>
                 )}
                 
                 <div className="mt-4">
                   <button onClick={() => setScanModalOpen(false)} className="primary-btn w-full">
-                    {scanResult.predictionClass === 'Invalid_Image' ? 'Try Again' : 'Done'}
+                    {scanResult.predictionClass === 'Invalid_Image' ? t('try_again') : t('done')}
                   </button>
                 </div>
               </div>

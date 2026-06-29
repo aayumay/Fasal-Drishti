@@ -26,8 +26,11 @@ function MapInteractionHandler({ isDrawingMode, newPolygonCoords, setTempCoords 
   return null;
 }
 
+import { useLanguage } from '../context/LanguageContext';
+
 export default function MapModule() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { myFarms: farms, activeFarm, setActiveFarmId, addFarm, removeFarm, updateFarmHealth } = useFarmContext();
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [newPolygonCoords, setNewPolygonCoords] = useState(null);
@@ -424,10 +427,10 @@ export default function MapModule() {
   const confidence = Math.min(99, farmScore + 8);
 
   return (
-    <div className="pt-6 px-5 lg:px-8 pb-24 md:pb-8 flex flex-col flex-1 h-full">
+    <div className="pt-6 px-5 lg:px-8 pb-24 md:pb-8 flex flex-col flex-1 h-full overflow-y-auto" style={{ background: '#F8F6F2' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-5 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all">
+        <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all" style={{ border: '1px solid rgba(35,66,41,0.08)' }}>
           <ChevronLeft size={20} />
         </button>
         <div className="text-center flex flex-col items-center">
@@ -453,18 +456,18 @@ export default function MapModule() {
               </div>
             </div>
           ) : (
-            <h1 className="font-serif tracking-tight text-lg font-bold text-brand-text">{activeFarm?.name || "No Farm"}</h1>
+            <h1 style={{ fontFamily: 'Playfair Display, serif', fontWeight: 700, fontSize: '18px', color: '#1C2B1E' }}>{activeFarm?.name || t('no_farm_data')}</h1>
           )}
-          {activeFarm && <p className="text-brand-text-muted text-xs">{activeFarm.area_acres} Acre • {activeFarm.crop}</p>}
+          {activeFarm && <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: '#7A8A7C' }}>{activeFarm.area_acres} {t('acres')} • {activeFarm.crop}</p>}
         </div>
-        <button onClick={handleDeleteFarm} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-danger hover:shadow-md transition-all">
+        <button onClick={handleDeleteFarm} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-[#C0392B] hover:shadow-md transition-all" style={{ border: '1px solid rgba(35,66,41,0.08)' }}>
           <Trash2 size={20} />
         </button>
       </div>
 
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden h-full gap-6">
-        {/* Map Side (Left on Desktop, Top on Mobile) */}
-        <div className="relative w-full lg:w-2/3 h-[40vh] lg:h-full rounded-3xl overflow-hidden shadow-sm flex-shrink-0 bg-brand-bg">
+        {/* Map Side */}
+        <div className="relative w-full lg:w-2/3 h-[40vh] lg:h-[75vh] rounded-[32px] overflow-hidden shadow-sm flex-shrink-0" style={{ border: '1px solid rgba(35,66,41,0.08)' }}>
         {loadingSatellite && (
           <div className="absolute inset-0 z-[3000] bg-brand-bg/80 backdrop-blur-sm flex flex-col items-center justify-center">
             <div className="bg-white rounded-2xl px-6 py-4 shadow-lg flex items-center gap-3">

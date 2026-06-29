@@ -4,6 +4,7 @@ import { ChevronRight, User, MapPin, Map, Sprout, Combine, ArrowLeft, Loader2 } 
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useUserContext } from '../context/UserContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Gujarat', 'Haryana',
@@ -14,6 +15,7 @@ const INDIAN_STATES = [
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { saveUserName } = useUserContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', village: '', state: '', cropType: 'Soybean', farmSize: '' });
@@ -38,17 +40,21 @@ export default function ProfileSetup() {
   };
 
   return (
-    <div className="flex flex-col px-6 pt-14 pb-8 h-full overflow-y-auto">
+    <div className="flex flex-col px-6 pt-14 pb-8 h-full overflow-y-auto" style={{ background: '#F8F6F2' }}>
       <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center text-brand-text-muted hover:text-brand-text hover:shadow-md transition-all mb-6">
         <ArrowLeft size={20} />
       </button>
       <div className="mb-8">
-        <h1 className="font-serif tracking-tight text-3xl font-bold text-brand-text mb-2">Create Profile</h1>
-        <p className="text-brand-text-muted text-sm leading-relaxed">Tell us about yourself and your farm to get personalized insights.</p>
+        <h1 style={{ fontFamily: 'Playfair Display, serif', fontWeight: 700, fontSize: '28px', color: '#1C2B1E', letterSpacing: '-0.02em', marginBottom: '8px' }}>
+          {t('complete_profile')}
+        </h1>
+        <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '14px', color: '#7A8A7C', lineHeight: 1.6 }}>
+          Tell us about yourself and your farm to get personalized insights.
+        </p>
       </div>
       <form onSubmit={handleSaveProfile} className="space-y-5 flex-1 flex flex-col">
         <div>
-          <label className="block text-brand-text-muted text-sm font-medium mb-1.5">Full Name</label>
+          <label className="block text-brand-text-muted text-sm font-medium mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>Full Name</label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted"><User size={18} /></span>
             <input type="text" name="name" required className="input-field pl-11" placeholder="Rohit Kumar" value={formData.name} onChange={handleChange} />
@@ -56,14 +62,14 @@ export default function ProfileSetup() {
         </div>
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="block text-brand-text-muted text-sm font-medium mb-1.5">Village</label>
+            <label className="block text-brand-text-muted text-sm font-medium mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>Village</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted"><MapPin size={18} /></span>
               <input type="text" name="village" required className="input-field pl-11" placeholder="Village Name" value={formData.village} onChange={handleChange} />
             </div>
           </div>
           <div className="flex-1">
-            <label className="block text-brand-text-muted text-sm font-medium mb-1.5">State</label>
+            <label className="block text-brand-text-muted text-sm font-medium mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>State</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted"><Map size={18} /></span>
               <select name="state" required className="input-field pl-11 appearance-none" value={formData.state} onChange={handleChange}>
@@ -74,7 +80,7 @@ export default function ProfileSetup() {
           </div>
         </div>
         <div>
-          <label className="block text-brand-text-muted text-sm font-medium mb-1.5">Primary Crop</label>
+          <label className="block text-brand-text-muted text-sm font-medium mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>Primary Crop</label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted"><Sprout size={18} /></span>
             <select name="cropType" className="input-field pl-11 appearance-none" value={formData.cropType} onChange={handleChange}>
@@ -83,14 +89,14 @@ export default function ProfileSetup() {
           </div>
         </div>
         <div>
-          <label className="block text-brand-text-muted text-sm font-medium mb-1.5">Farm Size (Acres)</label>
+          <label className="block text-brand-text-muted text-sm font-medium mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>Farm Size ({t('acres')})</label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-brand-text-muted"><Combine size={18} /></span>
             <input type="number" name="farmSize" step="0.1" required className="input-field pl-11" placeholder="5.0" value={formData.farmSize} onChange={handleChange} />
           </div>
         </div>
         <button type="submit" disabled={loading} className="primary-btn mt-auto mb-4">
-          {loading ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><span>Complete Setup</span><ChevronRight size={20} /></>}
+          {loading ? <><Loader2 size={18} className="animate-spin" /> Saving...</> : <><span>{t('save_profile')}</span><ChevronRight size={20} /></>}
         </button>
       </form>
     </div>
