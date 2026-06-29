@@ -361,30 +361,26 @@ export default function MapModule() {
     const cPct = Math.max(0, 100 - hPct - wPct - rPct);
     const critCount = Math.round(N * cPct / 100);
 
-    // ── KEY FIX ──
-    // We only color cells that are in RISK zones (watch / high-risk / critical).
-    // Healthy cells are left TRANSPARENT so the satellite imagery shows through correctly.
-    // This prevents painting green over buildings, roads and any non-farmland area.
-    const riskColors = [];
+    const colors = [];
     for (let i = 0; i < N; i++) {
-      if (i < watchCount) riskColors.push('#fbbf24');       // Watch  – amber
-      else if (i < watchCount + riskCount) riskColors.push('#fb923c'); // High – orange
-      else if (i < watchCount + riskCount + critCount) riskColors.push('#ef4444'); // Critical – red
-      else riskColors.push(null); // Healthy → no overlay
+      if (i < watchCount) colors.push('#fbbf24');       // Watch  – amber
+      else if (i < watchCount + riskCount) colors.push('#fb923c'); // High – orange
+      else if (i < watchCount + riskCount + critCount) colors.push('#ef4444'); // Critical – red
+      else colors.push('#22c55e'); // Healthy – green
     }
 
     // Deterministic shuffle so pattern is stable
     let seed = hPct * 100 + N;
     const random = () => { let x = Math.sin(seed++) * 10000; return x - Math.floor(x); };
-    for (let i = riskColors.length - 1; i > 0; i--) {
+    for (let i = colors.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
-      [riskColors[i], riskColors[j]] = [riskColors[j], riskColors[i]];
+      [colors[i], colors[j]] = [colors[j], colors[i]];
     }
 
-    // Only return cells that actually have a risk color (skip null = healthy)
-    return validCells
-      .map((bounds, idx) => ({ bounds, color: riskColors[idx] }))
-      .filter(cell => cell.color !== null);
+    return validCells.map((bounds, i) => ({
+      bounds,
+      color: colors[i]
+    })).filter(cell => cell.color !== null);
   };
 
 
