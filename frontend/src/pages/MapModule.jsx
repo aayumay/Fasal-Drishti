@@ -470,7 +470,7 @@ export default function MapModule() {
         )}
 
         <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm text-[9px] text-brand-text-muted text-center py-1.5 z-[2000] border-b border-brand-text/5 uppercase tracking-widest font-semibold">
-          {satelliteData ? 'Data Source: Real-Time Sentinel-2 Satellite NDVI' : 'Data Source: Awaiting Satellite Data...'}
+          {satelliteData ? 'Data Source: Real-Time Sentinel-2 Satellite NDVI' : 'Satellite imagery processing — select a verified agricultural field to enable analytics'}
         </div>
 
         {mapCenter ? (
@@ -517,10 +517,11 @@ export default function MapModule() {
               <>
                 <Polygon
                   positions={activeFarm.coordinates}
-                  pathOptions={{ color: '#ffffff', weight: 2, fillOpacity: 0 }}
+                  pathOptions={{ color: '#ffffff', weight: 2.5, fillOpacity: 0, dashArray: satelliteData ? undefined : '8, 6' }}
                 />
-                {/* Always render the colored grid cells using the real satellite score */}
-                {generateGridCells(activeFarm.coordinates, healthyPct, watchPct, highRiskPct).map((cell, idx) => (
+                {/* Only render risk grid when we have REAL satellite NDVI data from AgroMonitoring.
+                    Without confirmed data we show nothing — fake cells over buildings are worse than no cells. */}
+                {satelliteData && generateGridCells(activeFarm.coordinates, healthyPct, watchPct, highRiskPct).map((cell, idx) => (
                   <Rectangle
                     key={idx}
                     bounds={cell.bounds}
@@ -689,42 +690,58 @@ export default function MapModule() {
         <>
           {/* Farm Overview Card */}
           <div className="bg-white rounded-3xl p-6 mb-4 shadow-sm">
-            <h3 className="text-base font-bold text-brand-text mb-5">Farm Overview</h3>
-            
-            <div className="flex items-center gap-6">
-              <div className="relative w-28 h-28 flex-shrink-0">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F5F0E8" strokeWidth="4" />
-                  <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#D4A373" strokeWidth="4" strokeDasharray={`${farmScore} ${100 - farmScore}`} strokeLinecap={farmScore > 0 ? "round" : "butt"} />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-brand-text leading-none">{farmScore}%</span>
-                  <span className="text-[10px] text-brand-text-muted mt-1 font-medium">Health</span>
-                </div>
-              </div>
-              
-              <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-brand-green"></div><span className="text-brand-text-muted">Healthy</span></span>
-                  <span className="text-brand-text font-bold">{healthyPct}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-brand-accent"></div><span className="text-brand-text-muted">Watch</span></span>
-                  <span className="text-brand-text font-bold">{watchPct}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div><span className="text-brand-text-muted">High Risk</span></span>
-                  <span className="text-brand-text font-bold">{highRiskPct}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-brand-danger"></div><span className="text-brand-text-muted">Critical</span></span>
-                  <span className="text-brand-text font-bold">{criticalPct}%</span>
-                </div>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-brand-text">Farm Overview</h3>
+              {satelliteData && (
+                <span className="text-[10px] font-bold text-brand-green bg-brand-green/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                  <ShieldCheck size={10} /> Live NDVI
+                </span>
+              )}
             </div>
+
+            {satelliteData ? (
+              <div className="flex items-center gap-6">
+                <div className="relative w-28 h-28 flex-shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F5F0E8" strokeWidth="4" />
+                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#D4A373" strokeWidth="4" strokeDasharray={`${farmScore} ${100 - farmScore}`} strokeLinecap={farmScore > 0 ? "round" : "butt"} />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-brand-text leading-none">{farmScore}%</span>
+                    <span className="text-[10px] text-brand-text-muted mt-1 font-medium">Health</span>
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
+                  {[
+                    { label: 'Healthy', val: healthyPct, color: 'bg-brand-green' },
+                    { label: 'Watch', val: watchPct, color: 'bg-brand-accent' },
+                    { label: 'High Risk', val: highRiskPct, color: 'bg-orange-400' },
+                    { label: 'Critical', val: criticalPct, color: 'bg-brand-danger' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} className="flex items-center justify-between">
+                      <span className="flex items-center gap-2"><div className={`w-2.5 h-2.5 rounded-full ${color}`} /><span className="text-brand-text-muted">{label}</span></span>
+                      <span className="text-brand-text font-bold">{val}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-4 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-[#F8F6F2] flex items-center justify-center mb-3">
+                  <div className="w-6 h-6 border-2 border-[#2F5D3A]/30 border-t-[#2F5D3A] rounded-full animate-spin" />
+                </div>
+                <p style={{ fontFamily: 'Playfair Display, serif', fontWeight: 600, fontSize: '15px', color: '#1C2B1E', marginBottom: '6px' }}>
+                  Awaiting Satellite Pass
+                </p>
+                <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: '#7A8A7C', lineHeight: 1.6, maxWidth: '200px' }}>
+                  AgroMonitoring processes new polygons within 24–48 hrs after the next Sentinel-2 satellite overpass.
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Predicted Spread & Confidence Card */}
+          {/* Predicted Spread & Confidence Card — only show with real data */}
+          {satelliteData ? (
           <div className="bg-white rounded-3xl p-6 mb-5 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -745,6 +762,13 @@ export default function MapModule() {
               </div>
             </div>
           </div>
+          ) : (
+          <div className="bg-[#F8F6F2] border border-[#1C2B1E]/6 rounded-3xl p-5 mb-5 text-center">
+            <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: '#7A8A7C', lineHeight: 1.6 }}>
+              Disease spread prediction and precision ROI will be available once satellite imagery is processed for this field.
+            </p>
+          </div>
+          )}
 
           {/* Pesticide ROI Dashboard */}
           {activeFarm && (
