@@ -52,6 +52,8 @@ export default function MapModule() {
   const [highRiskPct, setHighRiskPct] = useState(0);
   const [criticalPct, setCriticalPct] = useState(100);
   const [farmScore, setFarmScore] = useState(0);
+  const [lastSatelliteDate, setLastSatelliteDate] = useState(null); // ISO date string from AgroMonitoring
+  const [isRealNdvi, setIsRealNdvi] = useState(false); // true only when AgroMonitoring data is confirmed
 
   // Math implementation for normal distribution
   const erf = (x) => {
@@ -190,15 +192,10 @@ export default function MapModule() {
 
   const fetchSatelliteData = async (polyid, currentFarm) => {
     const applyFallback = () => {
+      // Fallback: derive health from stored score (never fake random numbers)
       setSatelliteData(null);
-      let fs = currentFarm?.healthScore !== undefined && currentFarm?.healthScore !== null ? currentFarm.healthScore : null;
-      
-      if (fs === null && currentFarm?.coordinates?.length) {
-        // Fast Hackathon fallback for missing data
-        fs = Math.floor(Math.abs(Math.sin(currentFarm.coordinates[0][0]) * 30)) + 65;
-        if (currentFarm.id) updateFarmHealth(currentFarm.id, fs);
-      }
-
+      setIsRealNdvi(false);
+      let fs = currentFarm?.healthScore != null ? currentFarm.healthScore : null;
       if (fs !== null) {
         setFarmScore(fs);
         setHealthyPct(fs);
@@ -206,55 +203,64 @@ export default function MapModule() {
         setWatchPct(Math.floor(rem * 0.5));
         setHighRiskPct(Math.floor(rem * 0.3));
         setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
-      } else {
-        setFarmScore(null);
-        setHealthyPct(0);
-        setWatchPct(0);
-        setHighRiskPct(0);
-        setCriticalPct(0);
       }
     };
 
     try {
       setLoadingSatellite(true);
+      // Fetch last 60 days so we always find the most recent satellite pass
       const end = Math.floor(Date.now() / 1000);
-      const start = end - (30 * 24 * 60 * 60);
+      const start = end - (60 * 24 * 60 * 60);
       const apiKey = import.meta.env.VITE_AGRO_API_KEY;
 
-      const historyRes = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`);
+      const historyRes = await fetch(
+        `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polyid}&start=${start}&end=${end}&appid=${apiKey}`
+      );
       if (historyRes.ok) {
         const history = await historyRes.json();
         if (history && history.length > 0) {
+          // Sort descending – most recent satellite pass first
+          history.sort((a, b) => b.dt - a.dt);
           const latest = history[0];
-          setNdviTileUrl(latest.tile.ndvi);
+
+          // Store the satellite overpass date
+          if (latest.dt) {
+            setLastSatelliteDate(new Date(latest.dt * 1000).toISOString());
+          }
+
+          if (latest.tile?.ndvi) setNdviTileUrl(latest.tile.ndvi);
+
           if (latest.data) {
-             setSatelliteData(latest.data);
-             const mean = latest.data.mean;
-             const std = latest.data.std || 0.0001;
-             const cdf = (x) => 0.5 * (1 + erf((x - mean) / (std * Math.sqrt(2))));
-             
-             const nCrit = Math.max(0, Math.round(cdf(0.2) * 100));
-             const nHigh = Math.max(0, Math.round((cdf(0.4) - cdf(0.2)) * 100));
-             const nWatch = Math.max(0, Math.round((cdf(0.6) - cdf(0.4)) * 100));
-             const nHealthy = Math.max(0, 100 - nCrit - nHigh - nWatch);
-             const nScore = Math.max(0, Math.round(mean * 100));
-             
-             setCriticalPct(nCrit);
-             setHighRiskPct(nHigh);
-             setWatchPct(nWatch);
-             setHealthyPct(nHealthy);
-             setFarmScore(nScore);
-             if (currentFarm?.id && currentFarm.healthScore !== nScore) updateFarmHealth(currentFarm.id, nScore);
+            setSatelliteData(latest.data);
+            setIsRealNdvi(true);
+
+            const mean = latest.data.mean;
+            const std  = latest.data.std || 0.0001;
+            const cdf  = (x) => 0.5 * (1 + erf((x - mean) / (std * Math.sqrt(2))));
+
+            // NDVI thresholds → health zones
+            const nCrit    = Math.max(0, Math.round(cdf(0.2) * 100));
+            const nHigh    = Math.max(0, Math.round((cdf(0.4) - cdf(0.2)) * 100));
+            const nWatch   = Math.max(0, Math.round((cdf(0.6) - cdf(0.4)) * 100));
+            const nHealthy = Math.max(0, 100 - nCrit - nHigh - nWatch);
+            const nScore   = Math.max(0, Math.round(mean * 100));
+
+            setCriticalPct(nCrit);
+            setHighRiskPct(nHigh);
+            setWatchPct(nWatch);
+            setHealthyPct(nHealthy);
+            setFarmScore(nScore);
+            if (currentFarm?.id && currentFarm.healthScore !== nScore) updateFarmHealth(currentFarm.id, nScore);
           }
         } else {
-          console.warn("Satellite imagery not yet available for this polygon.");
+          console.warn('No satellite imagery yet for this polygon – using stored health score.');
           applyFallback();
         }
       } else {
         applyFallback();
       }
     } catch (e) {
-      console.error("Satellite fetch failed:", e);
+      console.error('Satellite fetch failed:', e);
       applyFallback();
     } finally {
       setLoadingSatellite(false);
@@ -262,45 +268,40 @@ export default function MapModule() {
   };
 
   useEffect(() => {
-    if (activeFarm?.coordinates?.[0]) {
-      setMapCenter(activeFarm.coordinates[0]);
-    }
-    if (activeFarm) {
-      // Avoid refetching endlessly when healthScore updates activeFarm
-      // We only fetch when polygonId changes or when initializing
-      fetch('/api/map/ndvi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(activeFarm.coordinates || [])
-      })
-      .then(res => res.json())
-      .then(data => setRoiData(data))
-      .catch(console.error);
+    if (activeFarm?.coordinates?.[0]) setMapCenter(activeFarm.coordinates[0]);
+    if (!activeFarm) return;
 
-      if (activeFarm.polygonId) {
-        fetchSatelliteData(activeFarm.polygonId, activeFarm);
-      } else {
-        let fs = activeFarm.healthScore !== undefined && activeFarm.healthScore !== null ? activeFarm.healthScore : null;
-        if (fs === null && activeFarm.coordinates?.length) {
-          fs = Math.floor(Math.abs(Math.sin(activeFarm.coordinates[0][0]) * 30)) + 65;
-          updateFarmHealth(activeFarm.id, fs);
-        }
-        if (fs !== null) {
-          setFarmScore(fs);
-          setHealthyPct(fs);
-          const rem = 100 - fs;
-          setWatchPct(Math.floor(rem * 0.5));
-          setHighRiskPct(Math.floor(rem * 0.3));
-          setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
-        } else {
-          setFarmScore(null);
-          setHealthyPct(0);
-          setWatchPct(0);
-          setHighRiskPct(0);
-          setCriticalPct(0);
-        }
-      }
+    // Fetch ROI area data
+    fetch('/api/map/ndvi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activeFarm.coordinates || [])
+    }).then(r => r.json()).then(setRoiData).catch(console.error);
+
+    // Initial satellite fetch
+    if (activeFarm.polygonId) {
+      fetchSatelliteData(activeFarm.polygonId, activeFarm);
+    } else if (activeFarm.healthScore != null) {
+      const fs = activeFarm.healthScore;
+      setFarmScore(fs);
+      setHealthyPct(fs);
+      const rem = 100 - fs;
+      setWatchPct(Math.floor(rem * 0.5));
+      setHighRiskPct(Math.floor(rem * 0.3));
+      setCriticalPct(rem - Math.floor(rem * 0.5) - Math.floor(rem * 0.3));
     }
+
+    // ─── Auto-poll: check for new satellite passes every 30 minutes ───
+    // Sentinel-2 revisit time is ~5 days. We poll frequently so the UI
+    // updates the moment AgroMonitoring ingests new imagery.
+    if (!activeFarm.polygonId) return;
+    const POLL_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+    const intervalId = setInterval(() => {
+      console.log('[Fasal] Checking for new satellite data...');
+      fetchSatelliteData(activeFarm.polygonId, activeFarm);
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(intervalId); // cleanup on farm change
   }, [activeFarm?.id]);
 
   useEffect(() => { requestLocation(true); }, []);
@@ -470,7 +471,7 @@ export default function MapModule() {
         )}
 
         <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm text-[9px] text-brand-text-muted text-center py-1.5 z-[2000] border-b border-brand-text/5 uppercase tracking-widest font-semibold">
-          {satelliteData ? 'Data Source: Real-Time Sentinel-2 Satellite NDVI' : 'Satellite imagery processing — select a verified agricultural field to enable analytics'}
+          {satelliteData ? `Live NDVI • Sentinel-2 • ${lastSatelliteDate ? new Date(lastSatelliteDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent pass'}` : activeFarm?.polygonId ? 'Polling for latest satellite pass…' : 'Register farm to enable satellite analytics'}
         </div>
 
         {mapCenter ? (
@@ -517,11 +518,12 @@ export default function MapModule() {
               <>
                 <Polygon
                   positions={activeFarm.coordinates}
-                  pathOptions={{ color: '#ffffff', weight: 2.5, fillOpacity: 0, dashArray: satelliteData ? undefined : '8, 6' }}
+                  pathOptions={{ color: '#ffffff', weight: 2.5, fillOpacity: 0 }}
                 />
-                {/* Only render risk grid when we have REAL satellite NDVI data from AgroMonitoring.
-                    Without confirmed data we show nothing — fake cells over buildings are worse than no cells. */}
-                {satelliteData && generateGridCells(activeFarm.coordinates, healthyPct, watchPct, highRiskPct).map((cell, idx) => (
+                {/* Render risk grid whenever we have health data — real NDVI or stored score.
+                    Healthy cells are always transparent so satellite imagery shows through. */}
+                {(healthyPct + watchPct + highRiskPct + criticalPct > 0) &&
+                  generateGridCells(activeFarm.coordinates, healthyPct, watchPct, highRiskPct).map((cell, idx) => (
                   <Rectangle
                     key={idx}
                     bounds={cell.bounds}
@@ -692,56 +694,62 @@ export default function MapModule() {
           <div className="bg-white rounded-3xl p-6 mb-4 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-brand-text">Farm Overview</h3>
-              {satelliteData && (
-                <span className="text-[10px] font-bold text-brand-green bg-brand-green/10 px-2 py-1 rounded-lg flex items-center gap-1">
-                  <ShieldCheck size={10} /> Live NDVI
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {isRealNdvi ? (
+                  <span className="text-[9px] font-bold text-brand-green bg-brand-green/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                    <ShieldCheck size={9} /> LIVE NDVI
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-bold text-brand-text-muted bg-brand-text/5 px-2 py-1 rounded-lg">
+                    STORED DATA
+                  </span>
+                )}
+                {activeFarm?.polygonId && (
+                  <button
+                    onClick={() => fetchSatelliteData(activeFarm.polygonId, activeFarm)}
+                    title="Refresh satellite data"
+                    className="w-7 h-7 rounded-lg bg-[#F8F6F2] flex items-center justify-center text-brand-text-muted hover:text-brand-green hover:bg-brand-green/10 transition-all"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {satelliteData ? (
-              <div className="flex items-center gap-6">
-                <div className="relative w-28 h-28 flex-shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F5F0E8" strokeWidth="4" />
-                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#D4A373" strokeWidth="4" strokeDasharray={`${farmScore} ${100 - farmScore}`} strokeLinecap={farmScore > 0 ? "round" : "butt"} />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-brand-text leading-none">{farmScore}%</span>
-                    <span className="text-[10px] text-brand-text-muted mt-1 font-medium">Health</span>
-                  </div>
-                </div>
-                <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
-                  {[
-                    { label: 'Healthy', val: healthyPct, color: 'bg-brand-green' },
-                    { label: 'Watch', val: watchPct, color: 'bg-brand-accent' },
-                    { label: 'High Risk', val: highRiskPct, color: 'bg-orange-400' },
-                    { label: 'Critical', val: criticalPct, color: 'bg-brand-danger' },
-                  ].map(({ label, val, color }) => (
-                    <div key={label} className="flex items-center justify-between">
-                      <span className="flex items-center gap-2"><div className={`w-2.5 h-2.5 rounded-full ${color}`} /><span className="text-brand-text-muted">{label}</span></span>
-                      <span className="text-brand-text font-bold">{val}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-4 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#F8F6F2] flex items-center justify-center mb-3">
-                  <div className="w-6 h-6 border-2 border-[#2F5D3A]/30 border-t-[#2F5D3A] rounded-full animate-spin" />
-                </div>
-                <p style={{ fontFamily: 'Playfair Display, serif', fontWeight: 600, fontSize: '15px', color: '#1C2B1E', marginBottom: '6px' }}>
-                  Awaiting Satellite Pass
-                </p>
-                <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: '#7A8A7C', lineHeight: 1.6, maxWidth: '200px' }}>
-                  AgroMonitoring processes new polygons within 24–48 hrs after the next Sentinel-2 satellite overpass.
-                </p>
-              </div>
+            {lastSatelliteDate && (
+              <p className="text-[10px] text-brand-text-muted mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Last satellite pass: <strong>{new Date(lastSatelliteDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong> • Next: ~{(() => { const d = new Date(lastSatelliteDate); d.setDate(d.getDate() + 5); return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); })()}
+              </p>
             )}
+
+            <div className="flex items-center gap-6">
+              <div className="relative w-28 h-28 flex-shrink-0">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F5F0E8" strokeWidth="4" />
+                  <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#D4A373" strokeWidth="4" strokeDasharray={`${farmScore} ${100 - farmScore}`} strokeLinecap={farmScore > 0 ? "round" : "butt"} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-brand-text leading-none">{farmScore}%</span>
+                  <span className="text-[10px] text-brand-text-muted mt-1 font-medium">Health</span>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col gap-2.5 text-xs font-medium">
+                {[
+                  { label: 'Healthy', val: healthyPct, color: 'bg-brand-green' },
+                  { label: 'Watch', val: watchPct, color: 'bg-brand-accent' },
+                  { label: 'High Risk', val: highRiskPct, color: 'bg-orange-400' },
+                  { label: 'Critical', val: criticalPct, color: 'bg-brand-danger' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="flex items-center gap-2"><div className={`w-2.5 h-2.5 rounded-full ${color}`} /><span className="text-brand-text-muted">{label}</span></span>
+                    <span className="text-brand-text font-bold">{val}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Predicted Spread & Confidence Card — only show with real data */}
-          {satelliteData ? (
+          {/* Predicted Spread & Confidence Card */}
           <div className="bg-white rounded-3xl p-6 mb-5 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -762,13 +770,6 @@ export default function MapModule() {
               </div>
             </div>
           </div>
-          ) : (
-          <div className="bg-[#F8F6F2] border border-[#1C2B1E]/6 rounded-3xl p-5 mb-5 text-center">
-            <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: '#7A8A7C', lineHeight: 1.6 }}>
-              Disease spread prediction and precision ROI will be available once satellite imagery is processed for this field.
-            </p>
-          </div>
-          )}
 
           {/* Pesticide ROI Dashboard */}
           {activeFarm && (
