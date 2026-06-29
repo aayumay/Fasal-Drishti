@@ -68,10 +68,45 @@ export default function MapModule() {
     setLoading(false);
   }, [farms]);
 
+  const [validationError, setValidationError] = useState(null);
+  const [validating, setValidating] = useState(false);
+
   const handleSaveFarm = async () => {
     if (!newPolygonCoords || newPolygonCoords.length === 0) return;
-    
-    // Reverse Geocode
+
+    setValidating(true);
+    setValidationError(null);
+
+    let validation = null;
+    try {
+      const res = await fetch('/api/map/validate-farmland', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coordinates: newPolygonCoords,
+          agro_api_key: import.meta.env.VITE_AGRO_API_KEY || ''
+        })
+      });
+      if (res.ok) validation = await res.json();
+    } catch (err) {
+      console.warn("Farmland validation API offline:", err);
+    }
+
+    setValidating(false);
+
+    // Block if explicitly detected as non-farmland
+    if (validation && validation.is_farmland === false) {
+      const label = validation.classification === 'urban_or_water'
+        ? 'urban area, buildings, or water body'
+        : 'bare soil or fallow land with no active crop';
+      setValidationError(
+        `This area appears to be a ${label} (NDVI: ${validation.ndvi_mean?.toFixed(2) ?? 'N/A'}). ` +
+        `Please select an actual agricultural field.`
+      );
+      return;
+    }
+
+    // Proceed to save
     let locationName = "Unknown Location";
     try {
       const lat = newPolygonCoords[0][0];
@@ -86,99 +121,43 @@ export default function MapModule() {
     } catch (err) {
       console.error("Geocoding failed", err);
     }
-    
-    let calculatedAreaAcres = 0;
-    try {
-      const res = await fetch('/api/map/ndvi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPolygonCoords)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        calculatedAreaAcres = data.area_acres || 0;
-      }
-    } catch (err) {
-      console.error("Backend offline, area calculation failed:", err);
-      // Rough fallback calculation if backend is down
-      calculatedAreaAcres = (Math.random() * 5 + 1).toFixed(1);
+
+    const area_acres = validation?.area_acres || farmArea;
+    const polygonId = validation?.polygon_id || null;
+    const healthScore = validation?.health_score ?? null;
+
+    // Apply real satellite metrics if available
+    if (validation?.health_score != null) {
+      setFarmScore(validation.health_score);
+      setHealthyPct(validation.healthy_pct);
+      setWatchPct(validation.watch_pct);
+      setHighRiskPct(validation.high_risk_pct);
+      setCriticalPct(validation.critical_pct);
     }
 
-    // Register with AgroMonitoring API
-    let polygonId = null;
     const existingCropFarms = farms.filter(f => f.crop === newFarmCrop).length;
     const suffix = existingCropFarms > 0 ? ` ${existingCropFarms + 1}` : '';
     const farmName = `${newFarmCrop} Farm${suffix}`;
 
-    try {
-      const geoJsonCoords = [...newPolygonCoords.map(c => [c[1], c[0]]), [newPolygonCoords[0][1], newPolygonCoords[0][0]]];
-      const geoJson = {
-        name: farmName,
-        geo_json: {
-          type: "Feature",
-          properties: {},
-          geometry: { type: "Polygon", coordinates: [geoJsonCoords] }
-        }
-      };
-      const agroRes = await fetch(`https://api.agromonitoring.com/agro/1.0/polygons?appid=${import.meta.env.VITE_AGRO_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geoJson)
-      });
-      if (agroRes.ok) {
-        const agroData = await agroRes.json();
-        polygonId = agroData.id;
-      }
-    } catch (err) {
-      console.error("AgroMonitoring registration failed:", err);
-    }
+    const newFarm = {
+      id: Date.now().toString(),
+      name: farmName,
+      crop: newFarmCrop,
+      area_acres,
+      coordinates: newPolygonCoords,
+      locationName,
+      polygonId,
+      healthScore,
+      classification: validation?.classification || 'unverified',
+      ndvi_mean: validation?.ndvi_mean ?? null,
+      status: 'Active'
+    };
 
-    try {
-      // Fetch real NDVI health score from AgroMonitoring if we got a polygonId
-      let healthScore = null;
-      if (polygonId) {
-        try {
-          const end = Math.floor(Date.now() / 1000);
-          const start = end - (30 * 24 * 60 * 60);
-          const apiKey = import.meta.env.VITE_AGRO_API_KEY;
-          const statRes = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start}&end=${end}&appid=${apiKey}`);
-          if (statRes.ok) {
-            const history = await statRes.json();
-            if (history && history.length > 0) {
-              const latest = history[0];
-              const ndviMean = latest.data?.mean ?? latest.mean ?? 0;
-              healthScore = Math.max(0, Math.round(ndviMean * 100));
-            } else {
-              // AgroMonitoring takes time to process newly drawn polygons.
-              // For the hackathon demo, if it's still processing, we provide a deterministic live score.
-              const pseudoScore = Math.floor(Math.abs(Math.sin(newPolygonCoords[0][0]) * 30)) + 65;
-              healthScore = pseudoScore;
-            }
-          }
-        } catch (ndviErr) {
-          console.warn("Could not fetch real NDVI score:", ndviErr);
-        }
-      }
-
-      const newFarm = {
-        id: Date.now().toString(),
-        name: farmName,
-        crop: newFarmCrop,
-        area_acres: farmArea || calculatedAreaAcres,
-        coordinates: newPolygonCoords,
-        locationName,
-        polygonId,
-        healthScore,
-        status: 'Active'
-      };
-      
-      addFarm(newFarm);
-      setIsDrawingMode(false);
-      setNewPolygonCoords(null);
-      setTempCoords([]);
-    } catch (err) {
-      console.error("Error saving farm:", err);
-    }
+    addFarm(newFarm);
+    setIsDrawingMode(false);
+    setNewPolygonCoords(null);
+    setTempCoords([]);
+    setValidationError(null);
   };
 
   const handleDeleteFarm = () => {
@@ -638,15 +617,14 @@ export default function MapModule() {
             <div className="card flex justify-between items-center px-4 py-3">
               <span className="font-medium text-brand-text-muted text-sm">Tap map to draw corners ({tempCoords.length})</span>
               <div className="flex gap-2">
-                <button onClick={() => { setTempCoords([]); setFarmArea(0); }} className="btn-sm">Clear</button>
+                <button onClick={() => { setTempCoords([]); setFarmArea(0); setValidationError(null); }} className="btn-sm">Clear</button>
                 <button
                   onClick={() => {
                     setNewPolygonCoords(tempCoords);
+                    setValidationError(null);
                     try {
-                      // Using Turf for reliable area calculation since L.GeometryUtil might not be bundled
                       const turfPoly = polygon([[...tempCoords.map(c => [c[1], c[0]]), [tempCoords[0][1], tempCoords[0][0]]]]);
                       const areaSqMeters = area(turfPoly);
-                      // Convert to Acres (1 sq meter = 0.000247105 acres)
                       const calculatedAcres = (areaSqMeters * 0.000247105).toFixed(2);
                       setFarmArea(parseFloat(calculatedAcres));
                     } catch(e) {
@@ -661,21 +639,47 @@ export default function MapModule() {
               </div>
             </div>
           ) : (
-            <div className="card flex justify-between items-center px-4 py-3 gap-2">
-              <select
-                value={newFarmCrop}
-                onChange={(e) => setNewFarmCrop(e.target.value)}
-                className="flex-1 bg-brand-bg text-brand-text text-sm px-3 py-2 rounded-xl outline-none border border-brand-text/10"
-              >
-                <option value="Soybean">Soybean</option>
-                <option value="Cotton">Cotton</option>
-                <option value="Rice">Rice</option>
-                <option value="Wheat">Wheat</option>
-                <option value="Tomato">Tomato</option>
-              </select>
-              <button onClick={handleSaveFarm} className="flex items-center gap-1 text-xs px-4 py-2 rounded-xl font-bold bg-brand-green text-white shadow-sm transition-all hover:bg-brand-green/90">
-                <Check size={14} /> Save
-              </button>
+            <div className="flex flex-col gap-2">
+              {/* Validation error banner */}
+              {validationError && (
+                <div className="card p-4 border-l-4 border-l-[#C0392B] animate-fade-in bg-[#C0392B]/5 flex items-start gap-3">
+                  <span className="text-[#C0392B] text-lg flex-shrink-0">⚠️</span>
+                  <div>
+                    <p className="text-sm font-bold text-[#C0392B] mb-0.5">Not a Valid Agricultural Field</p>
+                    <p className="text-xs text-brand-text-muted leading-relaxed">{validationError}</p>
+                    <button
+                      onClick={() => { setNewPolygonCoords(null); setTempCoords([]); setValidationError(null); setFarmArea(0); }}
+                      className="mt-2 text-xs font-bold text-[#C0392B] underline"
+                    >
+                      Redraw Selection
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="card flex justify-between items-center px-4 py-3 gap-2">
+                <select
+                  value={newFarmCrop}
+                  onChange={(e) => setNewFarmCrop(e.target.value)}
+                  className="flex-1 bg-brand-bg text-brand-text text-sm px-3 py-2 rounded-xl outline-none border border-brand-text/10"
+                >
+                  <option value="Soybean">Soybean</option>
+                  <option value="Cotton">Cotton</option>
+                  <option value="Rice">Rice</option>
+                  <option value="Wheat">Wheat</option>
+                  <option value="Tomato">Tomato</option>
+                </select>
+                <button
+                  onClick={handleSaveFarm}
+                  disabled={validating}
+                  className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl font-bold bg-brand-green text-white shadow-sm transition-all hover:bg-brand-green/90 disabled:opacity-60"
+                >
+                  {validating ? (
+                    <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Verifying...</>
+                  ) : (
+                    <><Check size={14} /> Validate & Save</>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>
