@@ -702,6 +702,20 @@ export default function MapModule() {
 
       {activeFarm ? (
         <>
+          {activeFarm.classification === 'unverified' && (
+            <div className="bg-[#FFF5F5] border border-brand-danger/20 rounded-2xl p-4 mb-4 flex items-start gap-3 shadow-sm animate-fade-in">
+              <div className="mt-0.5 text-brand-danger">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xs font-bold text-brand-danger mb-1">Unverified Terrain</h4>
+                <p className="text-[11px] text-brand-text-muted leading-relaxed" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  OpenStreetMap could not instantly verify this as farmland. Satellite optical verification is currently processing in the background and will update shortly.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Farm Overview Card */}
           {farmScore !== null ? (
             <div className="bg-white rounded-3xl p-6 mb-4 shadow-sm">
