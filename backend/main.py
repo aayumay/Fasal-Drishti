@@ -18,12 +18,8 @@ from shapely.ops import transform
 # Load environment variables
 load_dotenv()
 
-# Import ML inference logic
-try:
-    from ml_model.inference import predict_image
-    ML_AVAILABLE = True
-except ImportError:
-    ML_AVAILABLE = False
+# Import ML inference logic lazily to drastically speed up dev server reload times
+ML_AVAILABLE = True
 
 # Import Market Service
 try:
@@ -177,7 +173,16 @@ async def predict_disease(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         if ML_AVAILABLE:
-            result = predict_image(contents)
+            try:
+                from ml_model.inference import predict_image
+                result = predict_image(contents)
+            except ImportError:
+                result = {
+                    "disease": "System Error",
+                    "confidence": 0,
+                    "severity": "Unknown",
+                    "action": "ML dependencies not found."
+                }
             if result:
                 return result
         
