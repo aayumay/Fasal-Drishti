@@ -410,12 +410,23 @@ export default function MapModule() {
 
 
   // --- 100% Real Precision ROI Calculations based on Satellite Data ---
-  const currentFarmArea = activeFarm ? activeFarm.area_acres : farmArea;
-  const safeArea = parseFloat(currentFarmArea) || 0; 
+  let safeArea = 0;
+  if (activeFarm) {
+    if (activeFarm.area_acres) {
+      safeArea = parseFloat(activeFarm.area_acres);
+    } else if (activeFarm.area) {
+      safeArea = parseFloat(activeFarm.area) * 0.000247105; // Legacy conversion
+    }
+  } else {
+    safeArea = (parseFloat(farmArea) || 0) * 0.000247105; // farmArea is in sqm
+  }
+  
   const finalStandardDose = Math.round(safeArea * 500) || 0; 
   const infectedPercentage = ((watchPct || 0) + (highRiskPct || 0) + (criticalPct || 0)) / 100;
   const finalTargetedDose = Math.round(finalStandardDose * infectedPercentage) || 0;
-  const finalSavingsPct = Math.round((1 - infectedPercentage) * 100) || 0;
+  
+  // Calculate savings, ensuring it never goes negative or NaN
+  const finalSavingsPct = Math.max(0, Math.round((1 - infectedPercentage) * 100)) || 0;
 
   // --- Real Spread Data from Physics Model ---
   const spreadDir = spreadData?.direction || 'Calculating...';
@@ -813,7 +824,7 @@ export default function MapModule() {
           ) : null}
 
           {/* Pesticide ROI Dashboard */}
-          {activeFarm && (
+          {activeFarm && farmScore !== null && (
             <div className="bg-brand-green/5 border border-brand-green/20 rounded-3xl p-6 mb-5 shadow-sm animate-fade-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
