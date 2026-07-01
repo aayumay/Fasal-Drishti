@@ -6,3 +6,6 @@ python-multipart
 numpy
 shapely
 pyproj
+python-dotenv
+httpx
+dotenv
