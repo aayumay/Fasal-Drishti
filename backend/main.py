@@ -204,7 +204,7 @@ async def get_weather(lat: float = 28.7041, lon: float = 77.1025):
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&hourly=relative_humidity_2m,precipitation_probability,precipitation"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=5.0)
+            response = await client.get(url, timeout=15.0)
             response.raise_for_status()
             data = response.json()
             
@@ -618,7 +618,7 @@ async def predict_disease_spread(req: SpreadRequest):
     url = f"https://api.open-meteo.com/v1/forecast?latitude={req.farm_lat}&longitude={req.farm_lon}&current_weather=true"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=5.0)
+            response = await client.get(url, timeout=15.0)
             if response.status_code == 200:
                 cw = response.json().get("current_weather", {})
                 wind_speed = cw.get("windspeed", 5.0)
