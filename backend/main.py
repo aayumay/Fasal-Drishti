@@ -257,7 +257,7 @@ async def get_weather(lat: float = 28.7041, lon: float = 77.1025):
                 "windDirection": wind_dir
             }
     except Exception as e:
-        return {"error": str(e), "temp": 0, "condition": "Error Fetching", "rainProb": 0}
+        return {"error": repr(e), "temp": 0, "condition": "Error Fetching", "rainProb": 0}
 
 @app.get("/api/mandi")
 async def get_api_mandi(state: str = None, commodity: str = None):
