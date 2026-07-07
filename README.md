@@ -62,4 +62,3 @@ npm run dev
 
 Check out the live application here: https://fasal-drishti-zeta.vercel.app
 
-Built with ❤️ for the Hackathon.
