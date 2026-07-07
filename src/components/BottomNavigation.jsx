@@ -14,7 +14,7 @@ const BottomNavigation = () => {
   ];
 
   // Only show navigation on these main paths
-  const mainPaths = ['/home', '/map', '/diagnose', '/alerts', '/menu', '/settings', '/help', '/about', '/action-plan'];
+  const mainPaths = ['/home', '/dashboard', '/map', '/diagnose', '/alerts', '/menu', '/settings', '/help', '/about', '/action-plan'];
   if (!mainPaths.includes(location.pathname)) {
     return null;
   }

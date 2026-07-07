@@ -6,6 +6,7 @@ import ErrorState from '../components/ErrorState';
 import VoiceSpeakerButton from '../components/VoiceSpeakerButton';
 import { useLanguage } from '../context/LanguageContext';
 import VendorDrawer from '../components/VendorDrawer';
+import { fetchWeather, getGPSPosition } from '../utils/weatherService';
 
 export default function Diagnose() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function Diagnose() {
   useEffect(() => {
     const localFarms = localStorage.getItem('fasal_farms');
     const activeId = localStorage.getItem('fasal_active_farm_id');
-    
+
     if (localFarms) {
       const parsed = JSON.parse(localFarms);
       if (parsed.length > 0) {
@@ -38,33 +39,44 @@ export default function Diagnose() {
         }
       }
     }
-    fetch('/api/weather')
-      .then(res => { if (!res.ok) throw new Error('API Error'); return res.json(); })
-      .then(data => setWeather({ temp: data.temp || 32, rainProb: data.rainProb || 40, condition: data.condition || '', windSpeed: data.windSpeed || 18, humidity: data.humidity || 92 }))
-      .catch(() => setWeatherError('Could not fetch weather data'))
-      .finally(() => setWeatherLoading(false));
 
-    fetch('/api/disease/spread', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ farm_id: "mock1", current_red_zone_acres: 0.5 })
-    })
-      .then(res => { if (!res.ok) throw new Error('API Error'); return res.json(); })
-      .then(data => setSpread(data))
-      .catch(() => {
-        setSpread({
-          direction: "North-East",
-          confidence: 85,
-          progression: [
-            { day: "Day 1", predicted_acres: 0.5 },
-            { day: "Day 2", predicted_acres: 0.65 },
-            { day: "Day 3", predicted_acres: 0.8 },
-            { day: "Day 4", predicted_acres: 1.1 },
-            { day: "Day 5", predicted_acres: 1.5 }
-          ]
+    // Load weather using the service
+    const loadWeather = async () => {
+      try {
+        const pos = await getGPSPosition();
+        const data = await fetchWeather(pos?.lat ?? null, pos?.lon ?? null);
+        setWeather({
+          temp:      data.temp,
+          rainProb:  data.rainProb,
+          condition: data.condition,
+          windSpeed: data.windSpeed,
+          humidity:  data.humidity
         });
+      } catch {
+        setWeatherError('Weather data unavailable');
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+    loadWeather();
+
+    // Load real disease spread from backend using active farm's actual ID
+    const farmId = activeFarm?.id || activeFarm?.polygon_id || null;
+    if (farmId) {
+      fetch('/api/disease/spread', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ farm_id: farmId, current_red_zone_acres: 0.5 }),
+        signal: AbortSignal.timeout(8000)
       })
-      .finally(() => setSpreadLoading(false));
+        .then(res => { if (!res.ok) throw new Error(`API ${res.status}`); return res.json(); })
+        .then(data => setSpread(data))
+        .catch(err => { console.warn('[Diagnose] Spread API failed:', err.message); setSpread(null); })
+        .finally(() => setSpreadLoading(false));
+    } else {
+      setSpread(null);
+      setSpreadLoading(false);
+    }
   }, []);
 
   const handleImageUpload = async (e) => {
